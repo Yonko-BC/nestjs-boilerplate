@@ -1,100 +1,94 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Microservices Architecture
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This project implements a scalable and maintainable microservices architecture using NestJS, gRPC, and Azure Cosmos DB. The architecture is designed to promote modularity, scalability, and separation of concerns.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Project Structure
 
-## Description
+The project is organized into the following main directories:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- `apps/`: Contains the API Gateway and individual microservices
+- `libs/`: Shared libraries and core functionality
+- `proto/`: Protocol Buffer definitions for gRPC services
+- `tools/`: Code generators and development tools
 
-## Project setup
+### API Gateway
 
-```bash
-$ pnpm install
-```
+The API Gateway (`apps/api-gateway`) serves as the entry point for client requests. It routes requests to the appropriate microservices and handles cross-cutting concerns such as authentication and request/response transformation.
 
-## Compile and run the project
+Key principles:
 
-```bash
-# development
-$ pnpm run start
+1. **Modular Structure**: The gateway is organized into modules (auth, user, order) for better separation of concerns.
+2. **Configuration Management**: Configurations for the app, gRPC clients, and Swagger are centralized in the `config/` directory.
+3. **Proxy Pattern**: Each module uses a proxy (e.g., `user.proxy.ts`) to communicate with its corresponding microservice via gRPC.
 
-# watch mode
-$ pnpm run start:dev
+### Shared Libraries (libs/)
 
-# production mode
-$ pnpm run start:prod
-```
+The `libs/` directory contains shared code and core functionality used across multiple microservices.
 
-## Run tests
+#### Core Library
 
-```bash
-# unit tests
-$ pnpm run test
+The core library (`libs/core`) provides base classes and utilities for common tasks:
 
-# e2e tests
-$ pnpm run test:e2e
+1. **Database Access**: `BaseRepository` in `database/cosmos/base.repository.ts` provides a generic repository pattern for Cosmos DB operations.
+2. **Domain Models**: `BaseEntity` and `ValueObject` in the `domain/` directory serve as base classes for domain entities and value objects.
+3. **gRPC Controllers**: `BaseGrpcController` in `grpc/base.controller.ts` provides a foundation for gRPC method handlers.
 
-# test coverage
-$ pnpm run test:cov
-```
+#### Shared Kernel
 
-## Deployment
+The shared kernel (`libs/shared-kernel`) contains code shared across all services:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. **DTOs**: Data Transfer Objects for consistent data structures between services.
+2. **Interfaces**: Common interfaces, such as `IRepository`.
+3. **Constants**: Shared constant values, like error messages.
+4. **Exceptions**: Custom exception classes for standardized error handling.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Protocol Buffers (proto/)
 
-```bash
-$ pnpm install -g mau
-$ mau deploy
-```
+The `proto/` directory contains the Protocol Buffer definitions for gRPC services. These files define the contract between the API Gateway and the microservices.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Code Generators (tools/)
 
-## Resources
+The `tools/` directory contains code generators to automate repetitive tasks:
 
-Check out a few resources that may come in handy when working with NestJS:
+1. **Proto Generator**: Generates TypeScript interfaces from Protocol Buffer definitions.
+2. **Service Generator**: (To be implemented) Scaffolds new microservices.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Key Principles and Best Practices
 
-## Support
+1. **Separation of Concerns**: Each microservice and module focuses on a specific domain or functionality.
+2. **DRY (Don't Repeat Yourself)**: Common code is extracted into shared libraries to promote reusability.
+3. **SOLID Principles**: The architecture adheres to SOLID principles, particularly the Single Responsibility and Dependency Inversion principles.
+4. **Scalability**: The microservices architecture allows for independent scaling of services.
+5. **Maintainability**: Modular structure and clear separation of concerns make the codebase easier to maintain and extend.
+6. **Type Safety**: TypeScript is used throughout the project to ensure type safety and improve developer experience.
+7. **Consistent Communication**: gRPC is used for efficient and type-safe communication between services.
+8. **Database Abstraction**: The `BaseRepository` provides a consistent interface for database operations across services.
+9. **Error Handling**: Centralized error messages and custom exceptions ensure consistent error reporting.
+10. **Code Generation**: Automated code generation tools improve developer productivity and maintain consistency.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Getting Started
 
-## Stay in touch
+1. Install dependencies: `pnpm install  `
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+2. Generate TypeScript interfaces from Protocol Buffers: `pnpm run generate:proto  `
 
-## License
+3. Start the API Gateway: `pnpm run start:gateway  `
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-# nestjs-boilerplate
+4. Start individual microservices (implement as needed).
+
+## Development Workflow
+
+1. Define new services or methods in the appropriate `.proto` file.
+2. Run the proto generator to create TypeScript interfaces.
+3. Implement the service logic in the corresponding microservice.
+4. Update the API Gateway to proxy requests to the new service.
+
+## Best Practices for Extending the Architecture
+
+1. **New Microservices**: When creating a new microservice, follow the existing structure and use the shared libraries.
+2. **Database Operations**: Extend the `BaseRepository` for new entity types as needed.
+3. **Error Handling**: Use the `ApplicationException` class for custom errors and add new error messages to the shared constants.
+4. **DTOs**: Define DTOs in the shared kernel for data structures used across multiple services.
+5. **Testing**: Write unit tests for individual components and integration tests for API endpoints.
+
+By following these principles and best practices, you can maintain a scalable, maintainable, and efficient microservices architecture.
