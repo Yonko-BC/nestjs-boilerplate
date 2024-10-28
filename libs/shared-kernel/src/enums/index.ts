@@ -1,0 +1,18 @@
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+}
+
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum ErrorCode {
+  NOT_FOUND = 'NOT_FOUND',
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  BAD_REQUEST = 'BAD_REQUEST',
+  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+}

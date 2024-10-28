@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./apps/boilerplate/test/jest-e2e.json"
   },
   "dependencies": {
+    "@azure/core-rest-pipeline": "^1.17.0",
     "@azure/cosmos": "^4.1.1",
     "@bufbuild/protobuf": "^2.2.0",
     "@grpc/grpc-js": "^1.12.2",
