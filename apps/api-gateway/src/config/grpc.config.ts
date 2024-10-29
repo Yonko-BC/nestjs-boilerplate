@@ -1,8 +1,10 @@
 import { ClientsModuleOptions, Transport } from '@nestjs/microservices';
+import { ORDER_SERVICE_NAME } from 'libs/proto/order/generated/order';
+import { USER_SERVICE_NAME } from 'libs/proto/user/generated/user';
 
 export const grpcClientOptions: ClientsModuleOptions = [
   {
-    name: 'USER_PACKAGE',
+    name: USER_SERVICE_NAME,
     transport: Transport.GRPC,
     options: {
       url: 'localhost:5000',
@@ -11,7 +13,7 @@ export const grpcClientOptions: ClientsModuleOptions = [
     },
   },
   {
-    name: 'ORDER_PACKAGE',
+    name: ORDER_SERVICE_NAME,
     transport: Transport.GRPC,
     options: {
       url: 'localhost:5001',
