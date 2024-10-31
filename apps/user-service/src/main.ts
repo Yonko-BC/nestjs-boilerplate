@@ -1,8 +1,21 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { UserServiceModule } from './user-service.module';
+import { MicroserviceOptions } from '@nestjs/microservices';
+import { UserModule } from './user.module';
+import { grpcConfig } from './config/grpc.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(UserServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  const logger = new Logger('UserService');
+
+  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+  //   UserModule,
+  //   grpcConfig,
+  // );
+
+  const app = await NestFactory.create(UserModule);
+
+  await app.listen(3000);
+
+  // logger.log(`User service is listening on ${grpcConfig.options.url}`);
 }
 bootstrap();
