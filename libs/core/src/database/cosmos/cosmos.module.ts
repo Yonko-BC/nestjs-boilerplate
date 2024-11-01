@@ -1,22 +1,3 @@
-// import { Global, Module, OnApplicationShutdown } from '@nestjs/common';
-
-// import { cosmosProviders } from './cosmos.provider';
-// import { closeCosmosConnection } from './cosmos.connection';
-// import { ConfigModule } from '@nestjs/config';
-// import { CosmosDatabaseSynchronizationService } from './cosmos-database-sync.service';
-
-// @Global()
-// @Module({
-//   imports: [ConfigModule],
-//   providers: [...cosmosProviders, CosmosDatabaseSynchronizationService],
-//   exports: [...cosmosProviders, CosmosDatabaseSynchronizationService],
-// })
-// export class CosmosModule implements OnApplicationShutdown {
-//   async onApplicationShutdown() {
-//     closeCosmosConnection();
-//   }
-// }
-
 import {
   DynamicModule,
   Global,
@@ -30,10 +11,11 @@ import {
 } from './cosmos.provider';
 import { closeCosmosConnection } from './cosmos.connection';
 import { DatabaseInitializer } from './cosmos-database-sync.service';
+import { ContainerDefinition } from '@azure/cosmos';
 
 interface CosmosModuleOptions {
   databaseId: string;
-  containerConfigs: { id: string; partitionKey: string }[];
+  containerConfigs: ContainerDefinition[];
 }
 
 @Global()
@@ -44,6 +26,12 @@ export class CosmosModule implements OnApplicationShutdown {
   }
 
   static forRoot(options: CosmosModuleOptions): DynamicModule {
+    if (!options.databaseId || !Array.isArray(options.containerConfigs)) {
+      throw new Error(
+        'Invalid Cosmos DB configuration: Missing database ID or container configuration.',
+      );
+    }
+
     const providers = [
       ...cosmosProviders,
       {

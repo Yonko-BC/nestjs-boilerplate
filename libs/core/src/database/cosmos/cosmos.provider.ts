@@ -19,26 +19,30 @@ export const cosmosProviders: Provider[] = [
       const retryInterval = configService.get<number>('COSMOS_RETRY_INTERVAL');
       const maxWaitTime = configService.get<number>('COSMOS_MAX_WAIT_TIME');
 
-      const databaseId = configService.get<string>('COSMOS_DATABASE_ID');
-
       if (!endpoint || !key) {
-        throw new Error('Missing required Cosmos DB configuration');
+        throw new Error(
+          'Missing required Cosmos DB configuration (endpoint or key)',
+        );
       }
 
-      return await getCosmosConnection(endpoint, key, databaseId, {
-        requestTimeout,
-        maxRetries,
-        retryInterval,
-        maxWaitTime,
-      });
+      return await getCosmosConnection(
+        endpoint,
+        key,
+        configService.get<string>('COSMOS_DATABASE_ID'),
+        {
+          requestTimeout,
+          maxRetries,
+          retryInterval,
+          maxWaitTime,
+        },
+      );
     },
     inject: [ConfigService],
   },
   {
     provide: DATABASE_ID,
-    useFactory: (configService: ConfigService) => {
-      return configService.get<string>('COSMOS_DATABASE_ID');
-    },
+    useFactory: (configService: ConfigService) =>
+      configService.get<string>('COSMOS_DATABASE_ID'),
     inject: [ConfigService],
   },
 ];

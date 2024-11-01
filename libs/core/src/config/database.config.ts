@@ -27,15 +27,4 @@ export class DatabaseConfig {
   @IsString()
   @IsNotEmpty()
   COSMOS_DATABASE_ID: string;
-
-  // @IsString()
-  @IsNotEmpty()
-  @Transform(({ value }) => {
-    // Transform comma-separated container configs into an array of objects
-    return value.split(',').map((container) => {
-      const [id, partitionKey] = container.split(':');
-      return { id, partitionKey };
-    });
-  })
-  COSMOS_CONTAINERS: { id: string; partitionKey: string }[];
 }

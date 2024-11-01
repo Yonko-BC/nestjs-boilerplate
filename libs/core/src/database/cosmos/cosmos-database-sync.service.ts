@@ -1,25 +1,28 @@
 import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
-import { CosmosClient, PartitionKeyDefinition } from '@azure/cosmos';
-import { COSMOS_CLIENT, DATABASE_ID } from './cosmos.provider';
-
-export interface ContainerConfig {
-  id: string;
-  partitionKey: PartitionKeyDefinition;
-  uniqueKeyPolicy?: any;
-  indexingPolicy?: any;
-}
+import { ContainerDefinition, CosmosClient } from '@azure/cosmos';
+import {
+  CONTAINER_CONFIGS,
+  COSMOS_CLIENT,
+  DATABASE_ID,
+} from './cosmos.provider';
 
 @Injectable()
 export class DatabaseInitializer implements OnModuleInit {
   private readonly logger = new Logger(DatabaseInitializer.name);
+
   constructor(
     @Inject(COSMOS_CLIENT) private readonly client: CosmosClient,
     @Inject(DATABASE_ID) private readonly databaseId: string,
-    @Inject('CONTAINER_CONFIGS')
-    private readonly containerConfigs: ContainerConfig[],
+    @Inject(CONTAINER_CONFIGS)
+    private readonly containerConfigs: ContainerDefinition[],
   ) {}
 
   async onModuleInit() {
+    if (!this.containerConfigs || this.containerConfigs.length === 0) {
+      this.logger.warn('No containers specified in container configuration.');
+      return;
+    }
+
     try {
       await this.initializeDatabaseAndContainers();
     } catch (error) {
@@ -29,7 +32,6 @@ export class DatabaseInitializer implements OnModuleInit {
   }
 
   private async initializeDatabaseAndContainers() {
-    // Ensure database exists
     await this.client.databases.createIfNotExists({ id: this.databaseId });
 
     for (const containerConfig of this.containerConfigs) {
@@ -37,49 +39,19 @@ export class DatabaseInitializer implements OnModuleInit {
     }
   }
 
-  private async createContainerIfNotExists({
-    id,
-    partitionKey,
-    uniqueKeyPolicy,
-    indexingPolicy,
-  }: ContainerConfig) {
+  private async createContainerIfNotExists(config: ContainerDefinition) {
     const database = this.client.database(this.databaseId);
 
     try {
       const { container } = await database.containers.createIfNotExists({
-        id,
-        partitionKey,
-        uniqueKeyPolicy,
-        indexingPolicy,
+        id: config.id,
+        partitionKey: config.partitionKey,
+        uniqueKeyPolicy: config.uniqueKeyPolicy,
+        indexingPolicy: config.indexingPolicy,
       });
-
-      this.logger.log(
-        `Ensured container ${id} exists in database ${this.databaseId}`,
-      );
+      this.logger.log(`Ensured container ${container.id} exists.`);
     } catch (error) {
-      this.logger.error(`Failed to create container ${id}`, error);
-      throw error;
-    }
-  }
-
-  // Optional: Method to drop and recreate containers (useful for testing/development)
-  async recreateContainer(containerId: string) {
-    const database = this.client.database(this.databaseId);
-
-    try {
-      // Try to delete existing container
-      try {
-        await database.container(containerId).delete();
-        this.logger.log(`Deleted existing container ${containerId}`);
-      } catch (deleteError) {
-        // Container might not exist, which is fine
-        this.logger.warn(`Container ${containerId} not found for deletion`);
-      }
-
-      // Recreate the container
-      await this.initializeDatabaseAndContainers();
-    } catch (error) {
-      this.logger.error(`Failed to recreate container ${containerId}`, error);
+      this.logger.error(`Failed to create container ${config.id}`, error);
       throw error;
     }
   }
