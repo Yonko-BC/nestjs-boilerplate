@@ -51,12 +51,12 @@ export abstract class BaseEntity {
   @IsString()
   type: string;
 
-  constructor(partitionKey: string, id?: string) {
+  constructor(partitionKey?: string, id?: string) {
     this.id = id || uuidv4();
-    this.partitionKey = partitionKey;
     this.createdAt = new Date();
     this.updatedAt = new Date();
     this.type = this.constructor.name;
+    this.partitionKey = partitionKey || '';
   }
 
   equals(other: BaseEntity): boolean {
@@ -81,7 +81,6 @@ export abstract class BaseEntity {
   toObject(): Record<string, any> {
     return {
       id: this.id,
-      partitionKey: this.partitionKey,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       type: this.type,

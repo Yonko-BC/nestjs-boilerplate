@@ -32,6 +32,8 @@ export class DatabaseInitializer implements OnModuleInit {
   }
 
   private async initializeDatabaseAndContainers() {
+    console.log('Initializing database and containers...');
+    console.log('Database ID:', this.databaseId);
     await this.client.databases.createIfNotExists({ id: this.databaseId });
 
     for (const containerConfig of this.containerConfigs) {

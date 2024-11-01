@@ -7,7 +7,7 @@ import { CosmosModule } from 'libs/core/src/database/cosmos/cosmos.module';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { DatabaseConfig } from 'libs/core/src/config/database.config';
-import { COSMOS_CONTAINERS_CONFIG } from './config/cosmos.config';
+import { COSMOS_CONTAINERS_CONFIG, COSMOS_DATABASE_ID } from './config/cosmos.config';
 
 @Module({
   imports: [
@@ -17,7 +17,6 @@ import { COSMOS_CONTAINERS_CONFIG } from './config/cosmos.config';
       validate: (config) => {
         const validatedConfig = plainToClass(DatabaseConfig, config);
         const errors = validateSync(validatedConfig);
-
         if (errors.length > 0) {
           throw new Error(errors.toString());
         }
@@ -25,7 +24,7 @@ import { COSMOS_CONTAINERS_CONFIG } from './config/cosmos.config';
       },
     }),
     CosmosModule.forRoot({
-      databaseId: process.env.COSMOS_DATABASE_ID,
+      databaseId: COSMOS_DATABASE_ID,
       containerConfigs: COSMOS_CONTAINERS_CONFIG,
     }),
   ],

@@ -1,25 +1,38 @@
 import { ContainerDefinition, PartitionKeyKind } from '@azure/cosmos';
 
+export const COSMOS_DATABASE_ID = 'user-service';
 export const COSMOS_CONTAINERS_CONFIG: ContainerDefinition[] = [
   {
     id: 'users',
-    partitionKey: {
-      paths: ['/id'],
-      kind: PartitionKeyKind.Hash,
+    partitionKey: { paths: ['/departmentId'], kind: PartitionKeyKind.Hash },
+    indexingPolicy: {
+      indexingMode: 'consistent',
+      includedPaths: [
+        { path: '/fullName/?' },
+        { path: '/departmentId/?' },
+        { path: '/siteId/?' }, // Indexing the siteId for site-specific queries
+        {
+          path: '/roleId/?',
+          indexes: [
+            {
+              kind: 'Range',
+              dataType: 'String',
+            },
+          ],
+        },
+      ],
+      excludedPaths: [
+        { path: '/*' }, // Excludes all other paths not included explicitly
+      ],
     },
     uniqueKeyPolicy: {
       uniqueKeys: [
         {
-          paths: ['/email'],
+          paths: ['/employeeId'],
         },
       ],
     },
-  },
-  {
-    id: 'roles',
-    partitionKey: {
-      paths: ['/id'],
-      kind: PartitionKeyKind.Hash,
-    },
+    // 30 days
+    // defaultTtl: 2592000,
   },
 ];

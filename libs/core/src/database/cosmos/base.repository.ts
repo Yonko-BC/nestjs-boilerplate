@@ -48,19 +48,8 @@ export abstract class BaseRepository<T extends BaseEntity>
   }
 
   async findById(id: string, partitionKey: string): Promise<T | null> {
-    try {
-      const { resource } = await this.container
-        .item(id, partitionKey)
-        .read<T>();
-      return resource || null;
-    } catch (error) {
-      if ((error as any).code === 404) return null;
-      throw new RepositoryError(
-        'Read operation failed',
-        'findById',
-        error as Error,
-      );
-    }
+    const { resource } = await this.container.item(id, partitionKey).read<T>();
+    return resource;
   }
 
   async findAll(options?: PaginationOptions): Promise<PaginatedResult<T>> {

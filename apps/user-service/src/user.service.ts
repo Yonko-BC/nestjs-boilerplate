@@ -5,17 +5,23 @@ import { Email } from './entities/email.vo';
 import { Password } from './entities/password.vo';
 
 import { PaginatedResult, PaginationOptions } from 'libs/shared-kernel/src';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
-  async createUser(userData: {
-    email: string;
-    password: string;
-    partitionKey: string;
-  }): Promise<User> {
-    const user = new User('yonko', userData.email, userData.password, true);
+  async createUser(userData: CreateUserDto): Promise<User> {
+    const user = new User(
+      userData.fullName,
+      userData.email,
+      userData.password,
+      true,
+      userData.departmentId,
+      userData.employeeId,
+      userData.siteId,
+      userData.roleId,
+    );
     return this.userRepository.create(user);
   }
 
@@ -36,8 +42,8 @@ export class UserService {
   ): Promise<User> {
     const email = new Email(userData.email);
     const password = new Password(userData.password);
-    const user = new User(email.value, password.value, partitionKey);
-    return this.userRepository.update(id, partitionKey, user);
+    // const user = new User(email.value, password.value, partitionKey);
+    return this.userRepository.update(id, partitionKey, {});
   }
 
   async deleteUser(id: string, partitionKey: string): Promise<void> {

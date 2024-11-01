@@ -38,20 +38,57 @@ export class User extends BaseEntity {
   @IsBoolean()
   isActive: boolean;
 
+  @ApiProperty({
+    description: "User's department ID",
+    example: 'dept-123',
+  })
+  @Expose()
+  @IsString()
+  departmentId: string;
+
+  @ApiProperty({
+    description: "User's employee ID",
+    example: 'emp-456',
+  })
+  @Expose()
+  @IsString()
+  employeeId: string;
+
+  @ApiProperty({
+    description: "User's site ID",
+    example: 'site-789',
+  })
+  @Expose()
+  @IsString()
+  siteId: string;
+
+  @ApiProperty({
+    description: "User's role ID",
+    example: 'role-101',
+  })
+  @Expose()
+  @IsString()
+  roleId: string;
+
   constructor(
     fullName: string,
     email: string,
     password: string,
     isActive: boolean = true,
+    departmentId: string,
+    employeeId: string,
+    siteId: string,
+    roleId: string,
   ) {
-    super('user');
-
-    console.log({ fullName, email, password, isActive });
-
+    super(departmentId);
     this.fullName = fullName;
     this.email = email;
     this.password = password;
     this.isActive = isActive;
+    this.departmentId = departmentId;
+    this.employeeId = employeeId;
+    this.siteId = siteId;
+    this.roleId = roleId;
   }
 
   deactivate(): void {
@@ -81,6 +118,10 @@ export class User extends BaseEntity {
       email: this.email,
       password: this.password,
       isActive: this.isActive,
+      departmentId: this.departmentId,
+      employeeId: this.employeeId,
+      siteId: this.siteId,
+      roleId: this.roleId,
     };
   }
 }
