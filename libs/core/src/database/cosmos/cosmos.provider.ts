@@ -4,6 +4,7 @@ import { getCosmosConnection } from './cosmos.connection';
 
 export const COSMOS_CLIENT = 'COSMOS_CLIENT';
 export const DATABASE_ID = 'DATABASE_ID';
+export const CONTAINER_CONFIGS = 'CONTAINER_CONFIGS';
 
 export const cosmosProviders: Provider[] = [
   {

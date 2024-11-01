@@ -16,13 +16,19 @@ import { DatabaseConfig } from 'libs/core/src/config/database.config';
       validate: (config) => {
         const validatedConfig = plainToClass(DatabaseConfig, config);
         const errors = validateSync(validatedConfig);
+        console.log({
+          validatedConfig: validatedConfig.COSMOS_CONTAINERS,
+        });
         if (errors.length > 0) {
           throw new Error(errors.toString());
         }
         return validatedConfig;
       },
     }),
-    CosmosModule,
+    CosmosModule.forRoot({
+      databaseId: process.env.COSMOS_DATABASE_ID,
+      containerConfigs: JSON.parse(process.env.COSMOS_CONTAINERS || '[]'),
+    }),
   ],
   providers: [UserRepository, UserService],
   controllers: [UserController],
