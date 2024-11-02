@@ -12,16 +12,7 @@ export class UserService {
   constructor(private userRepository: UserRepository) {}
 
   async createUser(userData: CreateUserDto): Promise<User> {
-    const user = new User(
-      userData.fullName,
-      userData.email,
-      userData.password,
-      true,
-      userData.departmentId,
-      userData.employeeId,
-      userData.siteId,
-      userData.roleId,
-    );
+    const user = new User({ ...userData });
     return this.userRepository.create(user);
   }
 

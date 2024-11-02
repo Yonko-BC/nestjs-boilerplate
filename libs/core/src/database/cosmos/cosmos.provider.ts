@@ -25,17 +25,12 @@ export const cosmosProviders: Provider[] = [
         );
       }
 
-      return await getCosmosConnection(
-        endpoint,
-        key,
-        configService.get<string>('COSMOS_DATABASE_ID'),
-        {
-          requestTimeout,
-          maxRetries,
-          retryInterval,
-          maxWaitTime,
-        },
-      );
+      return await getCosmosConnection(endpoint, key, {
+        requestTimeout,
+        maxRetries,
+        retryInterval,
+        maxWaitTime,
+      });
     },
     inject: [ConfigService],
   },

@@ -1,7 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { BaseEntity } from 'libs/core/src';
+import { BaseEntity, EntityConstructorParams } from 'libs/core/src';
 import { Email } from './email.vo';
 import { Password } from './password.vo';
 
@@ -71,24 +71,26 @@ export class User extends BaseEntity {
   roleId: string;
 
   constructor(
-    fullName: string,
-    email: string,
-    password: string,
-    isActive: boolean = true,
-    departmentId: string,
-    employeeId: string,
-    siteId: string,
-    roleId: string,
+    params: EntityConstructorParams & {
+      fullName: string;
+      email: string;
+      password: string;
+      isActive?: boolean;
+      departmentId: string;
+      employeeId: string;
+      siteId: string;
+      roleId: string;
+    },
   ) {
-    super(departmentId);
-    this.fullName = fullName;
-    this.email = email;
-    this.password = password;
-    this.isActive = isActive;
-    this.departmentId = departmentId;
-    this.employeeId = employeeId;
-    this.siteId = siteId;
-    this.roleId = roleId;
+    super(params);
+    this.fullName = params.fullName;
+    this.email = new Email(params.email).value;
+    this.password = new Password(params.password).value;
+    this.isActive = params.isActive ?? true;
+    this.departmentId = params.departmentId;
+    this.employeeId = params.employeeId;
+    this.siteId = params.siteId;
+    this.roleId = params.roleId;
   }
 
   deactivate(): void {
