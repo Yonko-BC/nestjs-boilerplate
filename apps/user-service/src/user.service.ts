@@ -1,43 +1,102 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
 import { UserRepository } from './infrastructure/persistence/user.repository';
 import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { PaginatedResult, PaginationOptions } from 'libs/shared-kernel/src';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { BusinessException } from 'libs/core/src/exceptions/business.exception';
 import { Email } from './entities/email.vo';
 import { Password } from './entities/password.vo';
 
-import { PaginatedResult, PaginationOptions } from 'libs/shared-kernel/src';
-import { CreateUserDto } from './dto/create-user.dto';
-
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
-  async createUser(userData: CreateUserDto): Promise<User> {
-    const user = new User({ ...userData });
-    return this.userRepository.create(user);
+  async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
+    const user = new User({
+      ...dto,
+      partitionKey: dto.departmentId, // Using departmentId as partition key
+    });
+
+    const createdUser = await this.userRepository.create(user);
+    return plainToClass(UserResponseDto, createdUser);
   }
 
-  async getUserById(id: string, partitionKey: string): Promise<User | null> {
-    return this.userRepository.findById(id, partitionKey);
+  async getUserById(
+    id: string,
+    departmentId: string,
+  ): Promise<UserResponseDto> {
+    const user = await this.userRepository.findById(id, departmentId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return plainToClass(UserResponseDto, user);
   }
 
   async getAllUsers(
     options?: PaginationOptions,
-  ): Promise<PaginatedResult<User>> {
-    return this.userRepository.findAll(options);
+  ): Promise<PaginatedResult<UserResponseDto>> {
+    const result = await this.userRepository.findAll(options);
+    return {
+      ...result,
+      items: result.items.map((user) => plainToClass(UserResponseDto, user)),
+    };
   }
 
   async updateUser(
     id: string,
-    partitionKey: string,
-    userData: Partial<User>,
-  ): Promise<User> {
-    const email = new Email(userData.email);
-    const password = new Password(userData.password);
-    // const user = new User(email.value, password.value, partitionKey);
-    return this.userRepository.update(id, partitionKey, {});
+    departmentId: string,
+    updateData: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.userRepository.findById(id, departmentId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    if (updateData.email) {
+      const existingUser = await this.userRepository.findByEmail(
+        updateData.email,
+      );
+      if (existingUser && existingUser.id !== id) {
+        throw new BusinessException(
+          'USER_EMAIL_TAKEN',
+          'Email address is already in use',
+          { email: updateData.email },
+        );
+      }
+    }
+
+    const transformedData = {
+      ...updateData,
+      email: updateData.email
+        ? new Email(updateData.email).getValue()
+        : undefined,
+      password: updateData.password
+        ? new Password(updateData.password).value
+        : undefined,
+    };
+
+    const updatedUser = await this.userRepository.update(
+      id,
+      departmentId,
+      transformedData,
+    );
+
+    return plainToClass(UserResponseDto, updatedUser);
   }
 
-  async deleteUser(id: string, partitionKey: string): Promise<void> {
-    await this.userRepository.delete(id, partitionKey);
+  async deleteUser(id: string, departmentId: string): Promise<void> {
+    const user = await this.userRepository.findById(id, departmentId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    await this.userRepository.delete(id, departmentId);
+  }
+
+  async findByEmail(email: string): Promise<UserResponseDto | null> {
+    const user = await this.userRepository.findByEmail(email);
+    return user ? plainToClass(UserResponseDto, user) : null;
   }
 }

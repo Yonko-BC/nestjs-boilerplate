@@ -19,7 +19,7 @@ export class User extends BaseEntity {
     example: 'john.doe@example.com',
   })
   @Expose()
-  @Transform(({ value }) => new Email(value).value)
+  @Transform(({ value }) => new Email(value).getValue())
   email: string;
 
   @ApiProperty({
@@ -84,7 +84,7 @@ export class User extends BaseEntity {
   ) {
     super(params);
     this.fullName = params.fullName;
-    this.email = new Email(params.email).value;
+    this.email = new Email(params.email).getValue();
     this.password = new Password(params.password).value;
     this.isActive = params.isActive ?? true;
     this.departmentId = params.departmentId;
@@ -108,7 +108,7 @@ export class User extends BaseEntity {
       this.fullName = fullName;
     }
     if (email) {
-      this.email = new Email(email).value;
+      this.email = new Email(email).getValue();
     }
     this.updateTimestamp();
   }

@@ -12,16 +12,17 @@ export interface PaginationMeta {
 export interface PaginationOptions {
   pageSize?: number;
   pageNumber?: number;
-  continuationToken?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   filter?: Record<string, unknown>;
+  continuationToken?: string;
 }
 
 export interface PaginatedResult<T> {
   items: T[];
   meta: PaginationMeta;
-  continuationToken?: string; // Ensure this is included
+  continuationToken?: string;
+  hasMoreResults?: boolean;
   links?: {
     self: string;
     first: string;
@@ -31,23 +32,36 @@ export interface PaginatedResult<T> {
   };
 }
 
+export type NormalizedPaginationOptions = {
+  pageSize: number;
+  pageNumber: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  filter?: Record<string, unknown>;
+  continuationToken?: string;
+};
+
 export function normalizePaginationOptions(
   options?: PaginationOptions,
-): Required<Omit<PaginationOptions, 'continuationToken' | 'filter'>> {
+): NormalizedPaginationOptions {
+  const defaultOptions: NormalizedPaginationOptions = {
+    pageSize: 20,
+    pageNumber: 1,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  };
+
+  if (!options) {
+    return defaultOptions;
+  }
+
   return {
-    pageSize: Math.min(
-      Math.max(
-        options?.pageSize ?? PAGINATION.DEFAULT_PAGE_SIZE,
-        PAGINATION.MIN_PAGE_SIZE,
-      ),
-      PAGINATION.MAX_PAGE_SIZE,
-    ),
-    pageNumber: Math.max(
-      options?.pageNumber ?? PAGINATION.DEFAULT_PAGE,
-      PAGINATION.DEFAULT_PAGE,
-    ),
-    sortBy: options?.sortBy ?? 'createdAt',
-    sortOrder: options?.sortOrder ?? PAGINATION.DEFAULT_SORT_DIRECTION,
+    pageSize: Math.min(Math.max(options.pageSize ?? 20, 1), 100),
+    pageNumber: Math.max(options.pageNumber ?? 1, 1),
+    sortBy: options.sortBy ?? 'createdAt',
+    sortOrder: options.sortOrder ?? 'desc',
+    filter: options.filter,
+    continuationToken: options.continuationToken,
   };
 }
 

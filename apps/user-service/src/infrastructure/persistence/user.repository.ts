@@ -17,11 +17,11 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.findOneBy({ email });
+    return this.findByEmail(email);
   }
 
-  async findActiveUsers(): Promise<User[]> {
-    const result = await this.findManyBy({ isActive: true });
-    return result.items;
-  }
+  // async findActiveUsers(): Promise<User[]> {
+  //   const result = await this.findManyBy({ isActive: true });
+  //   return result.items;
+  // }
 }
