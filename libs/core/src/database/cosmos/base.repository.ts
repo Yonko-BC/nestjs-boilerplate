@@ -13,7 +13,7 @@ import {
   normalizePaginationOptions,
   calculatePaginationMeta,
   buildPaginationLinks,
-} from 'libs/shared-kernel/src';
+} from '../../interfaces';
 import { BaseEntity } from '../../domain/base.entity';
 
 export abstract class BaseRepository<T extends BaseEntity> {

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
+import { EntityMetadata } from 'libs/core/src';
 
 @Exclude()
 export class UserResponseDto {
@@ -42,6 +43,10 @@ export class UserResponseDto {
   @Expose()
   @ApiProperty()
   updatedAt: Date;
+
+  @Expose()
+  @ApiProperty()
+  metadata: EntityMetadata;
 
   constructor(partial: Partial<UserResponseDto>) {
     Object.assign(this, partial);

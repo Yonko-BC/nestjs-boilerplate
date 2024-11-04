@@ -4,7 +4,7 @@ import { UserRepository } from './infrastructure/persistence/user.repository';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { PaginatedResult, PaginationOptions } from 'libs/shared-kernel/src';
+import { PaginatedResult, PaginationOptions } from 'libs/core/src/interfaces';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { BusinessException } from 'libs/core/src/exceptions/business.exception';
 import { Email } from './entities/email.vo';

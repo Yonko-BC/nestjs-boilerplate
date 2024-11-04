@@ -11,11 +11,11 @@ import {
 } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { validateEntity } from 'libs/shared-kernel/src/utils/validation.utils';
+import { validateEntity } from '../utils/validation.utils';
 import {
   TransformDate,
   TransformToString,
-} from 'libs/shared-kernel/src/decorators/entity-transform.decorator';
+} from '../decorators/entity-transform.decorator';
 
 export type EntityMetadata = {
   id: string;
