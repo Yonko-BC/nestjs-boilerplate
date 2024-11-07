@@ -18,6 +18,7 @@ import {
   ListUsersResponse,
 } from 'libs/proto/user/generated/user';
 import { PaginationOptions } from 'libs/core/src/interfaces';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Controller()
 @UserServiceControllerMethods()
@@ -104,7 +105,7 @@ export class UserController implements UserServiceController {
     };
   }
 
-  private transformToUserResponse(user: any): UserResponse {
+  private transformToUserResponse(user: UserResponseDto): UserResponse {
     return {
       id: user.id,
       fullName: user.fullName,
