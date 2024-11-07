@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { UserRepository } from './infrastructure/persistence/user.repository';
+import { UserRepository } from './repositories/user.repository';
 import { plainToClass } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { CosmosModule } from 'libs/core/src/database/cosmos/cosmos.module';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { DatabaseConfig } from 'libs/core/src/config/database.config';
-import { COSMOS_CONTAINERS_CONFIG, COSMOS_DATABASE_ID } from './config/cosmos.config';
+import {
+  COSMOS_CONTAINERS_CONFIG,
+  COSMOS_DATABASE_ID,
+} from './config/cosmos.config';
 
 @Module({
   imports: [

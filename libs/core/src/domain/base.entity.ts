@@ -119,10 +119,6 @@ export abstract class BaseEntity {
     this.metadata = {};
   }
 
-  /**
-   * Updates the entity's timestamp and version
-   * @param incrementVersion - Whether to increment the version number
-   */
   updateTimestamp(incrementVersion = true): void {
     this.updatedAt = new Date();
     if (incrementVersion) {
@@ -130,11 +126,6 @@ export abstract class BaseEntity {
     }
   }
 
-  /**
-   * Compares this entity with another for equality
-   * @param other - The entity to compare with
-   * @returns boolean indicating equality
-   */
   equals(other: BaseEntity): boolean {
     if (!(other instanceof BaseEntity)) {
       return false;
@@ -146,10 +137,6 @@ export abstract class BaseEntity {
     );
   }
 
-  /**
-   * Creates a deep clone of the entity
-   * @returns A new instance with the same properties
-   */
   clone(): this {
     const Constructor = this.constructor as new (
       params: EntityConstructorParams,
@@ -164,11 +151,6 @@ export abstract class BaseEntity {
     });
   }
 
-  /**
-   * Converts the entity to a plain object
-   * @param excludeMetadata - Whether to exclude metadata from the result
-   * @returns Plain object representation of the entity
-   */
   toObject(excludeMetadata = false): Record<string, any> {
     const obj: Record<string, any> = {
       id: this.id,
@@ -188,19 +170,10 @@ export abstract class BaseEntity {
     return obj;
   }
 
-  /**
-   * Validates the entity
-   * @throws ValidationException if validation fails
-   */
   validate(): void {
     validateEntity(this);
   }
 
-  /**
-   * Creates an entity from a plain object
-   * @param data - Plain object containing entity data
-   * @returns New entity instance
-   */
   static fromObject<T extends BaseEntity>(
     this: new (params: EntityConstructorParams) => T,
     data: Record<string, any>,

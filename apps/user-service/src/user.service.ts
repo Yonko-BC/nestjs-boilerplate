@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { UserRepository } from './infrastructure/persistence/user.repository';
+import { UserRepository } from './repositories/user.repository';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
@@ -15,9 +15,19 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
+    // Check if email already exists
+    const existingUser = await this.userRepository.findByEmail(dto.email);
+    if (existingUser) {
+      throw new BusinessException(
+        'USER_EMAIL_TAKEN',
+        'Email address is already in use',
+        { email: dto.email },
+      );
+    }
+
     const user = new User({
       ...dto,
-      partitionKey: dto.departmentId, // Using departmentId as partition key
+      partitionKey: dto.departmentId,
     });
 
     const createdUser = await this.userRepository.create(user);
@@ -93,10 +103,5 @@ export class UserService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     await this.userRepository.delete(id, departmentId);
-  }
-
-  async findByEmail(email: string): Promise<UserResponseDto | null> {
-    const user = await this.userRepository.findByEmail(email);
-    return user ? plainToClass(UserResponseDto, user) : null;
   }
 }

@@ -11,19 +11,90 @@ import { Observable } from "rxjs";
 export const protobufPackage = "user";
 
 export interface CreateUserRequest {
+  fullName: string;
   email: string;
   password: string;
-  name: string;
+  departmentId: string;
+  employeeId: string;
+  siteId: string;
+  roleId: string;
 }
 
 export interface GetUserRequest {
   id: string;
+  departmentId: string;
+}
+
+export interface UpdateUserRequest {
+  id: string;
+  departmentId: string;
+  fullName?: string | undefined;
+  email?: string | undefined;
+  password?: string | undefined;
+  employeeId?: string | undefined;
+  siteId?: string | undefined;
+  roleId?: string | undefined;
+  isActive?: boolean | undefined;
+}
+
+export interface DeleteUserRequest {
+  id: string;
+  departmentId: string;
+}
+
+export interface ListUsersRequest {
+  pageSize: number;
+  pageNumber: number;
+  sortBy: string;
+  sortOrder: string;
+  continuationToken: string;
+  filter: { [key: string]: string };
+}
+
+export interface ListUsersRequest_FilterEntry {
+  key: string;
+  value: string;
+}
+
+export interface PaginationMeta {
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginationLinks {
+  self: string;
+  first: string;
+  last: string;
+  next?: string | undefined;
+  prev?: string | undefined;
+}
+
+export interface ListUsersResponse {
+  items: UserResponse[];
+  meta: PaginationMeta | undefined;
+  links: PaginationLinks | undefined;
+  hasMoreResults: boolean;
+  continuationToken?: string | undefined;
 }
 
 export interface UserResponse {
   id: string;
+  fullName: string;
   email: string;
-  name: string;
+  isActive: boolean;
+  departmentId: string;
+  employeeId: string;
+  siteId: string;
+  roleId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Empty {
 }
 
 export const USER_PACKAGE_NAME = "user";
@@ -32,17 +103,29 @@ export interface UserServiceClient {
   createUser(request: CreateUserRequest): Observable<UserResponse>;
 
   getUser(request: GetUserRequest): Observable<UserResponse>;
+
+  updateUser(request: UpdateUserRequest): Observable<UserResponse>;
+
+  deleteUser(request: DeleteUserRequest): Observable<Empty>;
+
+  listUsers(request: ListUsersRequest): Observable<ListUsersResponse>;
 }
 
 export interface UserServiceController {
   createUser(request: CreateUserRequest): Promise<UserResponse> | Observable<UserResponse> | UserResponse;
 
   getUser(request: GetUserRequest): Promise<UserResponse> | Observable<UserResponse> | UserResponse;
+
+  updateUser(request: UpdateUserRequest): Promise<UserResponse> | Observable<UserResponse> | UserResponse;
+
+  deleteUser(request: DeleteUserRequest): Promise<Empty> | Observable<Empty> | Empty;
+
+  listUsers(request: ListUsersRequest): Promise<ListUsersResponse> | Observable<ListUsersResponse> | ListUsersResponse;
 }
 
 export function UserServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createUser", "getUser"];
+    const grpcMethods: string[] = ["createUser", "getUser", "updateUser", "deleteUser", "listUsers"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("UserService", method)(constructor.prototype[method], method, descriptor);

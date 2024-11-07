@@ -5,20 +5,88 @@ package user;
 service UserService {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
   rpc GetUser (GetUserRequest) returns (UserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (Empty);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
 }
 
 message CreateUserRequest {
-  string email = 1;
-  string password = 2;
-  string name = 3;
+  string full_name = 1;
+  string email = 2;
+  string password = 3;
+  string department_id = 4;
+  string employee_id = 5;
+  string site_id = 6;
+  string role_id = 7;
 }
 
 message GetUserRequest {
   string id = 1;
+  string department_id = 2;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string department_id = 2;
+  optional string full_name = 3;
+  optional string email = 4;
+  optional string password = 5;
+  optional string employee_id = 6;
+  optional string site_id = 7;
+  optional string role_id = 8;
+  optional bool is_active = 9;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+  string department_id = 2;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  int32 page_number = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+  string continuation_token = 5;
+  map<string, string> filter = 6;
+}
+
+message PaginationMeta {
+  int32 current_page = 1;
+  int32 page_size = 2;
+  int32 total_pages = 3;
+  int32 total_count = 4;
+  bool has_next_page = 5;
+  bool has_previous_page = 6;
+}
+
+message PaginationLinks {
+  string self = 1;
+  string first = 2;
+  string last = 3;
+  optional string next = 4;
+  optional string prev = 5;
+}
+
+message ListUsersResponse {
+  repeated UserResponse items = 1;
+  PaginationMeta meta = 2;
+  PaginationLinks links = 3;
+  bool has_more_results = 4;
+  optional string continuation_token = 5;
 }
 
 message UserResponse {
   string id = 1;
-  string email = 2;
-  string name = 3;
+  string full_name = 2;
+  string email = 3;
+  bool is_active = 4;
+  string department_id = 5;
+  string employee_id = 6;
+  string site_id = 7;
+  string role_id = 8;
+  string created_at = 9;
+  string updated_at = 10;
 }
+
+message Empty {}

@@ -3,6 +3,11 @@ import {
   CosmosClient,
   StatusCodes,
   SqlQuerySpec,
+  BulkOptions,
+  BulkOperationType,
+  StatusCodesType,
+  ErrorResponse,
+  JSONObject,
 } from '@azure/cosmos';
 import { HttpStatus } from '@nestjs/common';
 import { CosmosException } from '../../exceptions/cosmos.exception';
@@ -15,7 +20,6 @@ import {
   buildPaginationLinks,
 } from '../../interfaces';
 import { BaseEntity } from '../../domain/base.entity';
-
 export abstract class BaseRepository<T extends BaseEntity> {
   protected container: Container;
 
@@ -36,17 +40,29 @@ export abstract class BaseRepository<T extends BaseEntity> {
     try {
       return await action();
     } catch (error) {
-      let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+      const cosmosError = error as {
+        code: keyof StatusCodesType;
+        message: string;
+        requestId?: string;
+        name?: string;
+      };
 
-      if (error.code === StatusCodes.NotFound) {
-        statusCode = HttpStatus.NOT_FOUND;
-      } else if (error.code === StatusCodes.Conflict) {
-        statusCode = HttpStatus.CONFLICT;
-      } else if (error.code === StatusCodes.TooManyRequests) {
-        statusCode = HttpStatus.TOO_MANY_REQUESTS;
+      let statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+
+      if (cosmosError.code in StatusCodes) {
+        statusCode = StatusCodes[cosmosError.code] as HttpStatus;
+      } else {
+        statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       }
 
-      throw new CosmosException(operation, error, statusCode);
+      const errorResponse: ErrorResponse = {
+        name: cosmosError.name || 'CosmosError',
+        code: StatusCodes[cosmosError.code],
+        message: cosmosError.message,
+        requestId: cosmosError.requestId,
+      };
+
+      throw new CosmosException(operation, errorResponse, statusCode);
     }
   }
 
@@ -267,5 +283,115 @@ export abstract class BaseRepository<T extends BaseEntity> {
       .query<number>(query)
       .fetchAll();
     return resources[0];
+  }
+
+  async findOne(filter: Partial<T>): Promise<T | null> {
+    return this.executeCosmosOperation('findOne', async () => {
+      const query = this.buildFilterQuery(filter, {
+        pageNumber: 1,
+        pageSize: 1,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+      const { resources } = await this.container.items
+        .query<T>(query)
+        .fetchAll();
+      return resources[0] || null;
+    });
+  }
+
+  async exists(filter: Partial<T>): Promise<boolean> {
+    return this.executeCosmosOperation('exists', async () => {
+      const count = await this.getFilteredCount(filter);
+      return count > 0;
+    });
+  }
+
+  async upsert(item: T, partitionKey: string): Promise<T> {
+    return this.executeCosmosOperation('upsert', async () => {
+      const timestamp = new Date().toISOString();
+      const documentToUpsert = {
+        ...item,
+        updatedAt: timestamp,
+        partitionKey,
+      };
+
+      const { resource } = await this.container.items.upsert(documentToUpsert);
+      return resource as unknown as T;
+    });
+  }
+
+  async bulkCreate(items: Array<Omit<T, keyof BaseEntity>>): Promise<T[]> {
+    return this.executeCosmosOperation('bulkCreate', async () => {
+      const timestamp = new Date().toISOString();
+      const operations = items.map((item) => ({
+        operationType: BulkOperationType.Create,
+        resourceBody: {
+          ...(item as T),
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        } as unknown as JSONObject,
+      }));
+
+      const bulkOptions: BulkOptions = { continueOnError: false };
+      const response = await this.container.items.bulk(operations, bulkOptions);
+
+      // Handle potential errors in bulk response
+      response.forEach((res) => {
+        if (res.statusCode >= 400) {
+          const errorResponse: ErrorResponse = {
+            name: 'BulkOperationError',
+            code: res.statusCode,
+            message:
+              (res.resourceBody as any)?.message || 'Bulk operation failed',
+            requestId: (res as any)?.requestId,
+          };
+          throw new CosmosException(
+            'bulkCreate',
+            errorResponse,
+            res.statusCode as HttpStatus,
+          );
+        }
+      });
+
+      return response.map((res) => res.resourceBody as unknown as T);
+    });
+  }
+
+  async createMany(items: Array<Omit<T, keyof BaseEntity>>): Promise<T[]> {
+    return this.executeCosmosOperation('createMany', async () => {
+      const timestamp = new Date().toISOString();
+      const operations = items.map((item) => ({
+        operationType: BulkOperationType.Create,
+        resourceBody: {
+          ...item,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        } as unknown as JSONObject,
+      }));
+
+      const bulkOptions: BulkOptions = { continueOnError: false };
+      const response = await this.container.items.bulk(operations, bulkOptions);
+
+      // Handle potential errors in bulk response
+      response.forEach((res) => {
+        if (res.statusCode >= 400) {
+          const errorResponse: ErrorResponse = {
+            name: 'BulkOperationError',
+            code: res.statusCode,
+            message:
+              (res.resourceBody as any)?.message || 'Bulk operation failed',
+            requestId: (res as any)?.requestId,
+          };
+          throw new CosmosException(
+            'createMany',
+            errorResponse,
+            res.statusCode as HttpStatus,
+          );
+        }
+      });
+
+      return response.map((res) => res.resourceBody as unknown as T);
+    });
   }
 }

@@ -7,16 +7,16 @@ import { ValidationException } from 'libs/core/src/exceptions/validation.excepti
 import { ResponseInterceptor } from 'libs/core/src/interceptors/response.interceptor';
 import { TimeoutInterceptor } from 'libs/core/src/interceptors/timeout.interceptor';
 import { v4 as uuidv4 } from 'uuid';
+import { grpcConfig } from './config/grpc.config';
+import { MicroserviceOptions } from '@nestjs/microservices';
 
 async function bootstrap() {
   const logger = new Logger('UserService');
-  const app = await NestFactory.create(UserModule);
-
-  // Request ID middleware
-  app.use((req, res, next) => {
-    req.headers['x-request-id'] = req.headers['x-request-id'] || uuidv4();
-    next();
-  });
+  // const app = await NestFactory.create(UserModule);
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    UserModule,
+    grpcConfig,
+  );
 
   // Global interceptors
   app.useGlobalInterceptors(new ResponseInterceptor());
@@ -38,7 +38,8 @@ async function bootstrap() {
     new CosmosExceptionFilter(),
   );
 
-  await app.listen(3000);
+  // await app.listen(3000);
+  await app.listen();
   logger.log('User service is running on port 3000');
 }
 bootstrap();

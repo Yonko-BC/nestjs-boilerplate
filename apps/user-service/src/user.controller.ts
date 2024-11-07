@@ -1,110 +1,121 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  HttpStatus,
-  ParseUUIDPipe,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import { PaginatedResult, PaginationOptions } from 'libs/core/src/interfaces';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { plainToClass } from 'class-transformer';
+import {
+  CreateUserRequest,
+  DeleteUserRequest,
+  Empty,
+  GetUserRequest,
+  ListUsersRequest,
+  UpdateUserRequest,
+  USER_SERVICE_NAME,
+  UserResponse,
+  UserServiceController,
+  UserServiceControllerMethods,
+  ListUsersResponse,
+} from 'libs/proto/user/generated/user';
+import { PaginationOptions } from 'libs/core/src/interfaces';
 
-@ApiTags('Users')
-@Controller('users')
-@ApiBearerAuth()
-export class UserController {
+@Controller()
+@UserServiceControllerMethods()
+export class UserController implements UserServiceController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new user' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'User has been successfully created.',
-    type: UserResponseDto,
-  })
-  async createUser(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<UserResponseDto> {
-    return this.userService.createUser(createUserDto);
+  @GrpcMethod(USER_SERVICE_NAME, 'CreateUser')
+  async createUser(request: CreateUserRequest): Promise<UserResponse> {
+    const createUserDto = plainToClass(CreateUserDto, {
+      fullName: request.fullName,
+      email: request.email,
+      password: request.password,
+      departmentId: request.departmentId,
+      employeeId: request.employeeId,
+      siteId: request.siteId,
+      roleId: request.roleId,
+    });
+
+    const user = await this.userService.createUser(createUserDto);
+    return this.transformToUserResponse(user);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a user by ID' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'User found.',
-    type: UserResponseDto,
-  })
-  async getUserById(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query('departmentId', ParseUUIDPipe) departmentId: string,
-  ): Promise<UserResponseDto> {
-    return this.userService.getUserById(id, departmentId);
+  @GrpcMethod(USER_SERVICE_NAME, 'GetUser')
+  async getUser(request: GetUserRequest): Promise<UserResponse> {
+    const user = await this.userService.getUserById(
+      request.id,
+      request.departmentId,
+    );
+    return this.transformToUserResponse(user);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'List of users.',
-    type: [UserResponseDto],
-  })
-  async getAllUsers(
-    @Query() paginationOptions: PaginationOptions,
-  ): Promise<PaginatedResult<UserResponseDto>> {
-    return this.userService.getAllUsers(paginationOptions);
+  @GrpcMethod(USER_SERVICE_NAME, 'UpdateUser')
+  async updateUser(request: UpdateUserRequest): Promise<UserResponse> {
+    const updateUserDto = plainToClass(UpdateUserDto, {
+      fullName: request.fullName,
+      email: request.email,
+      password: request.password,
+      employeeId: request.employeeId,
+      siteId: request.siteId,
+      roleId: request.roleId,
+      isActive: request.isActive,
+    });
+
+    const user = await this.userService.updateUser(
+      request.id,
+      request.departmentId,
+      updateUserDto,
+    );
+    return this.transformToUserResponse(user);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update a user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'User has been successfully updated.',
-    type: UserResponseDto,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'User not found.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data.',
-  })
-  async updateUser(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query('departmentId', ParseUUIDPipe) departmentId: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
-    return this.userService.updateUser(id, departmentId, updateUserDto);
+  @GrpcMethod(USER_SERVICE_NAME, 'DeleteUser')
+  async deleteUser(request: DeleteUserRequest): Promise<Empty> {
+    await this.userService.deleteUser(request.id, request.departmentId);
+    return {};
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete a user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: 'User has been successfully deleted.',
-  })
-  async deleteUser(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query('departmentId', ParseUUIDPipe) departmentId: string,
-  ): Promise<void> {
-    await this.userService.deleteUser(id, departmentId);
+  @GrpcMethod(USER_SERVICE_NAME, 'ListUsers')
+  async listUsers(request: ListUsersRequest): Promise<ListUsersResponse> {
+    const paginationOptions: PaginationOptions = {
+      pageSize: request.pageSize,
+      pageNumber: request.pageNumber,
+      sortBy: request.sortBy,
+      sortOrder: request.sortOrder as 'asc' | 'desc',
+      continuationToken: request.continuationToken,
+      filter: request.filter,
+    };
+
+    const result = await this.userService.getAllUsers(paginationOptions);
+
+    return {
+      items: result.items.map((user) => this.transformToUserResponse(user)),
+      meta: {
+        currentPage: result.meta.currentPage,
+        pageSize: result.meta.pageSize,
+        totalPages: result.meta.totalPages,
+        totalCount: result.meta.totalCount,
+        hasNextPage: result.meta.hasNextPage,
+        hasPreviousPage: result.meta.hasPreviousPage,
+      },
+      links: result.links,
+      hasMoreResults: result.hasMoreResults || false,
+      continuationToken: result.continuationToken,
+    };
+  }
+
+  private transformToUserResponse(user: any): UserResponse {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      isActive: user.isActive,
+      departmentId: user.departmentId,
+      employeeId: user.employeeId,
+      siteId: user.siteId,
+      roleId: user.roleId,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
   }
 }
