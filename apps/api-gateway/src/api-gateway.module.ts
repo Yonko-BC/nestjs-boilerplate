@@ -3,8 +3,6 @@ import { AppConfig } from './config/app.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { OrderModule } from './modules/order/order.module';
-import { ClientsModule } from '@nestjs/microservices';
-import { grpcClientOptions } from './config/grpc.config';
 import { GrpcModule } from './config/grpc.module';
 
 @Module({

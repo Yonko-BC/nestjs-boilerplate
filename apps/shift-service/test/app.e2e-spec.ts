@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { OrderServiceModule } from './../src/order-service.module';
+import { ShiftModule } from '../src/shift.module';
 
-describe('OrderServiceController (e2e)', () => {
+describe('ShiftServiceController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [OrderServiceModule],
+      imports: [ShiftModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();

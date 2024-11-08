@@ -2,11 +2,13 @@ syntax = "proto3";
 
 package user;
 
+import "google/protobuf/empty.proto";
+
 service UserService {
   rpc CreateUser (CreateUserRequest) returns (UserResponse);
   rpc GetUser (GetUserRequest) returns (UserResponse);
   rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
-  rpc DeleteUser (DeleteUserRequest) returns (Empty);
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
   rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
 }
 

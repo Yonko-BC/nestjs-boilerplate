@@ -47,7 +47,7 @@ export class UserController implements UserServiceController {
       request.id,
       request.departmentId,
     );
-    return this.transformToUserResponse(user);
+    return user;
   }
 
   @GrpcMethod(USER_SERVICE_NAME, 'UpdateUser')

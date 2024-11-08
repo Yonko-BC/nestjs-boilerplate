@@ -2,12 +2,12 @@
 // versions:
 //   protoc-gen-ts_proto  v2.2.5
 //   protoc               v5.28.2
-// source: user.proto
+// source: proto/user.proto
 
 /* eslint-disable */
 import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
 import { Observable } from "rxjs";
-import { Empty as Empty1 } from "./google/protobuf/empty";
+import { Empty as Empty1 } from "../google/protobuf/empty";
 
 export const protobufPackage = "user";
 

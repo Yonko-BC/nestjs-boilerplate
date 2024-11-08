@@ -9,6 +9,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { BusinessException } from 'libs/core/src/exceptions/business.exception';
 import { Email } from './entities/email.vo';
 import { Password } from './entities/password.vo';
+import { UserResponse } from 'libs/proto/user/generated/proto/user';
 
 @Injectable()
 export class UserService {
@@ -34,15 +35,12 @@ export class UserService {
     return plainToClass(UserResponseDto, createdUser);
   }
 
-  async getUserById(
-    id: string,
-    departmentId: string,
-  ): Promise<UserResponseDto> {
+  async getUserById(id: string, departmentId: string): Promise<UserResponse> {
     const user = await this.userRepository.findById(id, departmentId);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return plainToClass(UserResponseDto, user);
+    return this.transformToUserResponse(user);
   }
 
   async getAllUsers(
@@ -103,5 +101,20 @@ export class UserService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     await this.userRepository.delete(id, departmentId);
+  }
+
+  private transformToUserResponse(user: User): UserResponse {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      isActive: user.isActive,
+      departmentId: user.departmentId,
+      employeeId: user.employeeId,
+      siteId: user.siteId,
+      roleId: user.roleId,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
   }
 }

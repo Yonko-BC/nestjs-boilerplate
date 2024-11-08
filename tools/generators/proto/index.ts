@@ -11,12 +11,37 @@ async function generateProto(
   protoDir: string,
 ) {
   try {
-    await execAsync(
-      `protoc --proto_path=${protoDir} --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=nestJs=true --ts_proto_out=${outputPath} ${protoPath}`,
-    );
+    const projectRoot = path.join(__dirname, '../../..');
+
+    // Add multiple proto paths to help resolve imports
+    const command = [
+      'protoc',
+      `--proto_path=${projectRoot}`, // Add project root to help resolve imports
+      `--proto_path=${protoDir}`,
+      `--proto_path=${path.join(projectRoot, 'node_modules', 'google-protobuf', 'google')}`,
+      '--plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto',
+      '--ts_proto_opt=nestJs=true',
+      '--ts_proto_opt=esModuleInterop=true',
+      `--ts_proto_out=${outputPath}`,
+      protoPath,
+    ].join(' ');
+
+    console.log('Executing command:', command);
+
+    const { stdout, stderr } = await execAsync(command);
+
+    if (stdout) console.log(stdout);
+    if (stderr) console.error(stderr);
+
     console.log(`Generated TypeScript files for ${protoPath}`);
   } catch (error) {
-    console.error(`Error generating TypeScript files for ${protoPath}:`, error);
+    if (error instanceof Error) {
+      console.error(
+        `Error generating TypeScript files for ${protoPath}:`,
+        error.message,
+      );
+    }
+    throw error;
   }
 }
 
@@ -26,7 +51,12 @@ async function main() {
 
   const protoFiles = fs
     .readdirSync(protoDir)
-    .filter((file) => file.endsWith('.proto'));
+    .filter((file) => file.endsWith('.proto'))
+    .sort((a, b) => {
+      if (a === 'user.proto') return -1;
+      if (b === 'user.proto') return 1;
+      return 0;
+    });
 
   for (const protoFile of protoFiles) {
     const protoPath = path.join(protoDir, protoFile);
@@ -37,8 +67,16 @@ async function main() {
       fs.mkdirSync(serviceOutputDir, { recursive: true });
     }
 
-    await generateProto(protoPath, serviceOutputDir, protoDir);
+    try {
+      await generateProto(protoPath, serviceOutputDir, protoDir);
+    } catch (error) {
+      console.error(`Failed to generate ${protoFile}:`, error);
+      process.exit(1);
+    }
   }
 }
 
-main();
+main().catch((error) => {
+  console.error('Failed to generate proto files:', error);
+  process.exit(1);
+});

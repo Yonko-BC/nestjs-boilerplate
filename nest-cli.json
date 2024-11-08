@@ -28,13 +28,13 @@
         "tsConfigPath": "apps/user-service/tsconfig.app.json"
       }
     },
-    "order-service": {
+    "shift-service": {
       "type": "application",
-      "root": "apps/order-service",
+      "root": "apps/shift-service",
       "entryFile": "main",
-      "sourceRoot": "apps/order-service/src",
+      "sourceRoot": "apps/shift-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/order-service/tsconfig.app.json"
+        "tsConfigPath": "apps/shift-service/tsconfig.app.json"
       }
     },
     "shared": {

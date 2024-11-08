@@ -1,0 +1,278 @@
+syntax = "proto3";
+
+package shift;
+
+import "proto/user.proto";
+import "google/protobuf/empty.proto";
+
+
+service ShiftService {
+  // Core shift operations
+  rpc CreateShift (CreateShiftRequest) returns (ShiftResponse);
+  rpc GetShift (GetShiftRequest) returns (ShiftResponse);
+  rpc UpdateShift (UpdateShiftRequest) returns (ShiftResponse);
+  rpc DeleteShift (DeleteShiftRequest) returns (google.protobuf.Empty);
+  rpc ListShifts (ListShiftsRequest) returns (ListShiftsResponse);
+  
+  // Employee management
+  rpc AssignEmployeeToShift (AssignEmployeeRequest) returns (ShiftResponse);
+  rpc RemoveEmployeeFromShift (RemoveEmployeeRequest) returns (ShiftResponse);
+  rpc BulkAssignEmployees (BulkAssignEmployeesRequest) returns (ShiftResponse);
+  rpc SwapEmployeeShifts (SwapShiftsRequest) returns (SwapShiftsResponse);
+  
+  // Shift status management
+  rpc StartShift (StartShiftRequest) returns (ShiftResponse);
+  rpc EndShift (EndShiftRequest) returns (ShiftResponse);
+  rpc CancelShift (CancelShiftRequest) returns (ShiftResponse);
+  
+  // Schedule management
+  rpc CreateRecurringShift (CreateRecurringShiftRequest) returns (RecurringShiftResponse);
+  rpc GetShiftSchedule (GetShiftScheduleRequest) returns (ShiftScheduleResponse);
+}
+
+message Shift {
+  string id = 1;
+  string name = 2;
+  string department_id = 3;
+  string site_id = 4;
+  
+  // Time details
+  string start_time = 5;  // ISO format
+  string end_time = 6;    // ISO format
+  
+  // Capacity details
+  int32 min_employees_required = 7;
+  int32 max_employees_allowed = 8;
+  
+  // Leadership
+  string team_lead_id = 9;
+  string shift_lead_id = 10;
+  
+  // Assigned employees
+  repeated string employee_ids = 11;
+  
+  // Status
+  enum ShiftStatus {
+    PLANNED = 0;
+    IN_PROGRESS = 1;
+    COMPLETED = 2;
+    CANCELLED = 3;
+    ON_HOLD = 4;
+  }
+  ShiftStatus status = 12;
+  
+  // Break management
+  repeated BreakSchedule breaks = 13;
+  
+  // Additional metadata
+  string created_at = 14;
+  string updated_at = 15;
+  bool is_active = 16;
+  string notes = 17;
+  map<string, string> tags = 18;
+  ShiftMetrics metrics = 19;
+  RecurrenceRule recurrence = 20;
+}
+
+message BreakSchedule {
+  string start_time = 1;
+  string end_time = 2;
+  string break_type = 3;  // e.g., "LUNCH", "REST"
+  bool is_paid = 4;
+}
+
+message ShiftMetrics {
+  int32 current_employee_count = 1;
+  bool is_understaffed = 2;
+  bool is_overstaffed = 3;
+  float labor_cost = 4;
+  float productivity_score = 5;
+}
+
+message RecurrenceRule {
+  string frequency = 1;  // DAILY, WEEKLY, MONTHLY
+  repeated int32 days_of_week = 2;  // 0 = Sunday, 6 = Saturday
+  int32 interval = 3;  // Every X days/weeks/months
+  string until = 4;  // ISO date
+  int32 count = 5;  // Number of occurrences
+}
+
+// Request/Response messages for new endpoints
+message BulkAssignEmployeesRequest {
+  string shift_id = 1;
+  string department_id = 2;
+  repeated string employee_ids = 3;
+}
+
+message SwapShiftsRequest {
+  string department_id = 1;
+  string employee1_id = 2;
+  string shift1_id = 3;
+  string employee2_id = 4;
+  string shift2_id = 5;
+}
+
+message SwapShiftsResponse {
+  ShiftResponse shift1 = 1;
+  ShiftResponse shift2 = 2;
+  bool success = 3;
+}
+
+message StartShiftRequest {
+  string shift_id = 1;
+  string department_id = 2;
+  optional string started_by = 3;
+  optional string notes = 4;
+}
+
+message EndShiftRequest {
+  string shift_id = 1;
+  string department_id = 2;
+  optional string ended_by = 3;
+  optional string notes = 4;
+  optional ShiftMetrics final_metrics = 5;
+}
+
+message CancelShiftRequest {
+  string shift_id = 1;
+  string department_id = 2;
+  string reason = 3;
+  optional string cancelled_by = 4;
+}
+
+message CreateRecurringShiftRequest {
+  CreateShiftRequest shift_template = 1;
+  RecurrenceRule recurrence = 2;
+}
+
+message RecurringShiftResponse {
+  string recurring_shift_id = 1;
+  repeated ShiftResponse generated_shifts = 2;
+  RecurrenceRule recurrence = 3;
+}
+
+message GetShiftScheduleRequest {
+  string department_id = 1;
+  string start_date = 2;
+  string end_date = 3;
+  optional string site_id = 4;
+  optional string employee_id = 5;
+}
+
+message ShiftScheduleResponse {
+  repeated ShiftResponse shifts = 1;
+  map<string, EmployeeScheduleSummary> employee_summaries = 2;
+  ScheduleMetrics schedule_metrics = 3;
+}
+
+message EmployeeScheduleSummary {
+  string employee_id = 1;
+  float total_hours = 2;
+  int32 total_shifts = 3;
+  repeated string shift_ids = 4;
+}
+
+message ScheduleMetrics {
+  float total_labor_hours = 1;
+  float total_labor_cost = 2;
+  int32 total_shifts = 3;
+  map<string, int32> shifts_by_status = 4;
+}
+
+// Keep existing messages but update ListShiftsResponse and ShiftResponse
+message ListShiftsResponse {
+  repeated ShiftResponse items = 1;
+  PaginationMeta meta = 2;
+  PaginationLinks links = 3;
+  bool has_more_results = 4;
+  optional string continuation_token = 5;
+}
+
+message ShiftResponse {
+  Shift shift = 1;
+  repeated user.UserResponse employees = 2;
+  user.UserResponse team_lead = 3;
+  user.UserResponse shift_lead = 4;
+}
+
+// Pagination messages (moved from user.proto)
+message PaginationMeta {
+  int32 current_page = 1;
+  int32 page_size = 2;
+  int32 total_pages = 3;
+  int32 total_count = 4;
+  bool has_next_page = 5;
+  bool has_previous_page = 6;
+}
+
+message PaginationLinks {
+  string self = 1;
+  string first = 2;
+  string last = 3;
+  optional string next = 4;
+  optional string prev = 5;
+}
+
+// Add these message definitions after the existing messages and before ListShiftsRequest
+
+message CreateShiftRequest {
+  string name = 1;
+  string department_id = 2;
+  string site_id = 3;
+  string start_time = 4;
+  string end_time = 5;
+  int32 min_employees_required = 6;
+  int32 max_employees_allowed = 7;
+  optional string team_lead_id = 8;
+  optional string shift_lead_id = 9;
+  repeated BreakSchedule breaks = 10;
+  optional string notes = 11;
+  map<string, string> tags = 12;
+}
+
+message GetShiftRequest {
+  string id = 1;
+  string department_id = 2;
+}
+
+message UpdateShiftRequest {
+  string id = 1;
+  string department_id = 2;
+  optional string name = 3;
+  optional string site_id = 4;
+  optional string start_time = 5;
+  optional string end_time = 6;
+  optional int32 min_employees_required = 7;
+  optional int32 max_employees_allowed = 8;
+  optional string team_lead_id = 9;
+  optional string shift_lead_id = 10;
+  repeated BreakSchedule breaks = 11;
+  optional string notes = 12;
+  map<string, string> tags = 13;
+}
+
+message DeleteShiftRequest {
+  string id = 1;
+  string department_id = 2;
+}
+
+message AssignEmployeeRequest {
+  string shift_id = 1;
+  string department_id = 2;
+  string employee_id = 3;
+}
+
+message RemoveEmployeeRequest {
+  string shift_id = 1;
+  string department_id = 2;
+  string employee_id = 3;
+}
+
+message ListShiftsRequest {
+    int32 page_size = 1;
+    int32 page_number = 2;
+    string sort_by = 3;
+    string sort_order = 4;
+    string continuation_token = 5;
+    map<string, string> filter = 6;
+}
