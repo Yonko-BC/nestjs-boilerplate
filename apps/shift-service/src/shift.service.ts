@@ -1,22 +1,39 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ShiftRepository } from './repositories/shift.repository';
 import { Shift } from './entities/shift.entity';
 import { CreateShiftDto } from './dto/create-shift.dto';
 import { PaginatedResult, PaginationOptions } from 'libs/core/src/interfaces';
 import { UpdateShiftDto } from './dto/update-shift.dto';
-import { UserService } from 'apps/user-service/src/user.service';
 import {
   Shift_ShiftStatus,
-  Shift as ShiftProto,
   ShiftResponse,
 } from 'libs/proto/shift/generated/proto/shift';
+import { ClientGrpc } from '@nestjs/microservices';
+import { SERVICE_NAMES } from 'libs/core/src/constants';
+import {
+  USER_PACKAGE_NAME,
+  UserServiceClient,
+} from 'libs/proto/shift/generated/proto/user';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
-export class ShiftService {
+export class ShiftService implements OnModuleInit {
+  private userService: UserServiceClient;
+
   constructor(
+    @Inject(SERVICE_NAMES.USER_SERVICE) private userClient: ClientGrpc,
     private readonly shiftRepository: ShiftRepository,
-    private readonly userService: UserService,
   ) {}
+
+  onModuleInit() {
+    this.userService =
+      this.userClient.getService<UserServiceClient>(USER_PACKAGE_NAME);
+  }
 
   async createShift(dto: CreateShiftDto): Promise<ShiftResponse> {
     const shift = new Shift({
@@ -172,14 +189,26 @@ export class ShiftService {
     const [employees, teamLead, shiftLead] = await Promise.all([
       Promise.all(
         shift.employeeIds.map((id) =>
-          this.userService.getUserById(id, shift.departmentId),
+          firstValueFrom(
+            this.userService.getUser({ id, departmentId: shift.departmentId }),
+          ),
         ),
       ),
       shift.teamLeadId
-        ? this.userService.getUserById(shift.teamLeadId, shift.departmentId)
+        ? firstValueFrom(
+            this.userService.getUser({
+              id: shift.teamLeadId,
+              departmentId: shift.departmentId,
+            }),
+          )
         : Promise.resolve(undefined),
       shift.shiftLeadId
-        ? this.userService.getUserById(shift.shiftLeadId, shift.departmentId)
+        ? firstValueFrom(
+            this.userService.getUser({
+              id: shift.shiftLeadId,
+              departmentId: shift.departmentId,
+            }),
+          )
         : Promise.resolve(undefined),
     ]);
 

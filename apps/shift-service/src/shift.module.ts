@@ -11,6 +11,8 @@ import {
   COSMOS_CONTAINERS_CONFIG,
   COSMOS_DATABASE_ID,
 } from './config/cosmos.config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { SERVICE_NAMES } from 'libs/core/src/constants';
 
 @Module({
   imports: [
@@ -30,6 +32,26 @@ import {
       databaseId: COSMOS_DATABASE_ID,
       containerConfigs: COSMOS_CONTAINERS_CONFIG,
     }),
+    ClientsModule.register([
+      {
+        name: SERVICE_NAMES.SHIFT_SERVICE,
+        transport: Transport.GRPC,
+        options: {
+          package: 'shift',
+          protoPath: 'proto/user.proto',
+          url: '0.0.0.0:5005',
+          loader: {
+            keepCase: true,
+            longs: String,
+            enums: String,
+            defaults: true,
+            oneofs: true,
+          },
+          maxReceiveMessageLength: 1024 * 1024 * 100, // 100MB
+          maxSendMessageLength: 1024 * 1024 * 100, // 100MB
+        },
+      },
+    ]),
   ],
   providers: [ShiftRepository, ShiftService],
   controllers: [ShiftController],

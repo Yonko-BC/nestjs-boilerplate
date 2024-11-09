@@ -1,5 +1,6 @@
 import { ClientsModuleOptions, Transport } from '@nestjs/microservices';
-import { ORDER_SERVICE_NAME } from 'libs/proto/order/generated/order';
+
+import { SHIFT_SERVICE_NAME } from 'libs/proto/shift/generated/proto/shift';
 import { USER_SERVICE_NAME } from 'libs/proto/user/generated/user';
 
 export const grpcClientOptions: ClientsModuleOptions = [
@@ -13,12 +14,12 @@ export const grpcClientOptions: ClientsModuleOptions = [
     },
   },
   {
-    name: ORDER_SERVICE_NAME,
+    name: SHIFT_SERVICE_NAME,
     transport: Transport.GRPC,
     options: {
-      url: 'localhost:5001',
-      package: 'order',
-      protoPath: 'proto/order.proto',
+      url: 'localhost:5005',
+      package: 'shift',
+      protoPath: 'proto/shift.proto',
     },
   },
 ];
