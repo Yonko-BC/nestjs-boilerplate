@@ -7,78 +7,103 @@ import {
   ValidateNested,
   IsArray,
   IsDateString,
-  IsBoolean,
+  IsUUID,
+  Min,
 } from 'class-validator';
 import { BreakSchedule } from '../entities/shift.entity';
+import { BreakScheduleDto } from './create-shift.dto';
 
 export class UpdateShiftDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The name of the shift',
+    example: 'Morning Shift A',
+  })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The ID of the site where this shift takes place',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   siteId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The start time of the shift in ISO format',
+    example: '2024-03-20T09:00:00Z',
+  })
   @IsOptional()
   @IsDateString()
   startTime?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The end time of the shift in ISO format',
+    example: '2024-03-20T17:00:00Z',
+  })
   @IsOptional()
   @IsDateString()
   endTime?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Minimum number of employees required for this shift',
+    example: 3,
+    minimum: 1,
+  })
   @IsOptional()
   @IsNumber()
+  @Min(1)
   minEmployeesRequired?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Maximum number of employees allowed for this shift',
+    example: 5,
+    minimum: 1,
+  })
   @IsOptional()
   @IsNumber()
+  @Min(1)
   maxEmployeesAllowed?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The ID of the team lead assigned to this shift',
+    example: '123e4567-e89b-12d3-a456-426614174002',
+  })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   teamLeadId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'The ID of the shift lead assigned to this shift',
+    example: '123e4567-e89b-12d3-a456-426614174003',
+  })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   shiftLeadId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Array of break schedules for this shift',
+    type: [BreakScheduleDto],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => BreakScheduleDto)
   breaks?: BreakSchedule[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Additional notes about the shift',
+    example: 'Special training day',
+  })
   @IsOptional()
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Custom tags for the shift',
+    example: { priority: 'high', type: 'training' },
+  })
   @IsOptional()
   tags?: Record<string, string>;
-}
-
-class BreakScheduleDto implements BreakSchedule {
-  @IsDateString()
-  startTime: string;
-
-  @IsDateString()
-  endTime: string;
-
-  @IsString()
-  breakType: string;
-
-  @IsBoolean()
-  isPaid: boolean;
 }

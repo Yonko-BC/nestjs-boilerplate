@@ -16,7 +16,7 @@ import {
 import { ClientGrpc } from '@nestjs/microservices';
 import { SERVICE_NAMES } from 'libs/core/src/constants';
 import {
-  USER_PACKAGE_NAME,
+  USER_SERVICE_NAME,
   UserServiceClient,
 } from 'libs/proto/shift/generated/proto/user';
 import { firstValueFrom } from 'rxjs';
@@ -32,7 +32,7 @@ export class ShiftService implements OnModuleInit {
 
   onModuleInit() {
     this.userService =
-      this.userClient.getService<UserServiceClient>(USER_PACKAGE_NAME);
+      this.userClient.getService<UserServiceClient>(USER_SERVICE_NAME);
   }
 
   async createShift(dto: CreateShiftDto): Promise<ShiftResponse> {

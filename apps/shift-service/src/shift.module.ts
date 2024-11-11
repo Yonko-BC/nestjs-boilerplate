@@ -34,12 +34,12 @@ import { SERVICE_NAMES } from 'libs/core/src/constants';
     }),
     ClientsModule.register([
       {
-        name: SERVICE_NAMES.SHIFT_SERVICE,
+        name: SERVICE_NAMES.USER_SERVICE,
         transport: Transport.GRPC,
         options: {
-          package: 'shift',
+          package: 'user',
           protoPath: 'proto/user.proto',
-          url: '0.0.0.0:5005',
+          url: '0.0.0.0:5000',
           loader: {
             keepCase: true,
             longs: String,

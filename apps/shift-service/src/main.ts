@@ -39,6 +39,6 @@ async function bootstrap() {
 
   // await app.listen(3000);
   await app.listen();
-  logger.log('Shift service is running');
+  logger.log('Shift service is running on port 5005');
 }
 bootstrap();
