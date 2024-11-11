@@ -4,7 +4,7 @@ import { ClientGrpc } from '@nestjs/microservices';
 import {
   USER_SERVICE_NAME,
   UserServiceClient,
-} from 'libs/proto/user/generated/user';
+} from 'libs/proto/user/generated/proto/user';
 
 @Injectable()
 export class UserProxy implements OnModuleInit {

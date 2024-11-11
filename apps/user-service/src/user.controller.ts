@@ -16,7 +16,7 @@ import {
   UserServiceController,
   UserServiceControllerMethods,
   ListUsersResponse,
-} from 'libs/proto/user/generated/user';
+} from 'libs/proto/user/generated/proto/user';
 import { PaginationOptions } from 'libs/core/src/interfaces';
 import { UserResponseDto } from './dto/user-response.dto';
 
