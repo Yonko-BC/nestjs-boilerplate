@@ -1,5 +1,6 @@
 import { ClientsModuleOptions, Transport } from '@nestjs/microservices';
 import { SERVICE_NAMES } from 'libs/core/src/constants';
+import { join } from 'path';
 
 export const grpcClientOptions: ClientsModuleOptions = [
   {
@@ -8,7 +9,7 @@ export const grpcClientOptions: ClientsModuleOptions = [
     options: {
       url: 'localhost:5000',
       package: 'user',
-      protoPath: 'proto/user.proto',
+      protoPath: join(process.cwd(), 'proto/user.proto'),
     },
   },
   {
@@ -17,7 +18,7 @@ export const grpcClientOptions: ClientsModuleOptions = [
     options: {
       url: 'localhost:5005',
       package: 'shift',
-      protoPath: 'proto/shift.proto',
+      protoPath: join(process.cwd(), 'proto/shift.proto'),
     },
   },
 ];

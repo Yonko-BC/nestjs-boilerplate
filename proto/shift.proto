@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package shift;
 
-import "proto/user.proto";
+import "user.proto";
 import "google/protobuf/empty.proto";
 
 
