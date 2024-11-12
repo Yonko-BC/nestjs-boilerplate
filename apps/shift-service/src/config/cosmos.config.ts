@@ -57,6 +57,15 @@ export const COSMOS_CONTAINERS_CONFIG: ContainerDefinition[] = [
           ],
         },
         {
+          path: '/createdAt/?',
+          indexes: [
+            {
+              kind: 'Range',
+              dataType: 'String',
+            },
+          ],
+        },
+        {
           path: '/employeeIds/*',
           indexes: [
             {

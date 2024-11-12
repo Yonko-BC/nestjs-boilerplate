@@ -29,6 +29,7 @@ import {
 import { CreateShiftDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
 import { ShiftService } from './shift.service';
+import { GrpcToSnakeCase } from 'libs/core/src/decorators/grpc-transform.decorator';
 
 @Controller()
 @ShiftServiceControllerMethods()
@@ -36,6 +37,24 @@ export class ShiftController implements ShiftServiceController {
   constructor(private readonly shiftService: ShiftService) {}
 
   @GrpcMethod(SHIFT_SERVICE_NAME)
+  @GrpcToSnakeCase()
+  async listShifts(request: ListShiftsRequest): Promise<ListShiftsResponse> {
+    console.log('Transformed request:', request);
+
+    const result = await this.shiftService.getAllShifts({
+      pageSize: request.pageSize,
+      pageNumber: request.pageNumber,
+      sortBy: request.sortBy,
+      sortOrder: request.sortOrder as 'asc' | 'desc',
+      continuationToken: request.continuationToken,
+      filter: request.filter,
+    });
+
+    return result as ListShiftsResponse;
+  }
+
+  @GrpcMethod(SHIFT_SERVICE_NAME)
+  @GrpcToSnakeCase()
   async createShift(request: CreateShiftRequest): Promise<ShiftResponse> {
     const createShiftDto = plainToClass(CreateShiftDto, {
       name: request.name,
@@ -87,33 +106,6 @@ export class ShiftController implements ShiftServiceController {
   async deleteShift(request: DeleteShiftRequest): Promise<Empty> {
     await this.shiftService.deleteShift(request.id, request.departmentId);
     return {};
-  }
-
-  @GrpcMethod(SHIFT_SERVICE_NAME)
-  async listShifts(request: ListShiftsRequest): Promise<ListShiftsResponse> {
-    const result = await this.shiftService.getAllShifts({
-      pageSize: request.pageSize,
-      pageNumber: request.pageNumber,
-      sortBy: request.sortBy,
-      sortOrder: request.sortOrder as 'asc' | 'desc',
-      continuationToken: request.continuationToken,
-      filter: request.filter,
-    });
-
-    return {
-      items: result.items,
-      meta: {
-        currentPage: result.meta.currentPage,
-        pageSize: result.meta.pageSize,
-        totalPages: result.meta.totalPages,
-        totalCount: result.meta.totalCount,
-        hasNextPage: result.meta.hasNextPage,
-        hasPreviousPage: result.meta.hasPreviousPage,
-      },
-      links: result.links,
-      hasMoreResults: result.hasMoreResults || false,
-      continuationToken: result.continuationToken,
-    };
   }
 
   @GrpcMethod(SHIFT_SERVICE_NAME)

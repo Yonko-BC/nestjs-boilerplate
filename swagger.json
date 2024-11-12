@@ -1,0 +1,674 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/shifts": {
+      "post": {
+        "operationId": "ShiftController_createShift",
+        "summary": "Create a new shift",
+        "description": "Creates a new shift with the provided details",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The shift has been successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      },
+      "get": {
+        "operationId": "ShiftController_listShifts",
+        "summary": "List all shifts",
+        "description": "Retrieves a paginated list of shifts with optional filters",
+        "parameters": [
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort order (asc/desc)",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {}
+          },
+          {
+            "name": "pageNumber",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shifts retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ShiftResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "links": {
+                      "$ref": "#/components/schemas/PaginationLinksDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      }
+    },
+    "/shifts/{id}": {
+      "get": {
+        "operationId": "ShiftController_getShift",
+        "summary": "Get a shift by ID",
+        "description": "Retrieves shift details by ID and department",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the shift to retrieve",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentId",
+            "required": true,
+            "in": "query",
+            "description": "The department ID the shift belongs to",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shift details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      },
+      "patch": {
+        "operationId": "ShiftController_updateShift",
+        "summary": "Update a shift",
+        "description": "Updates an existing shift with the provided details",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the shift to update",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentId",
+            "required": true,
+            "in": "query",
+            "description": "The department ID the shift belongs to",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The shift has been successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      },
+      "delete": {
+        "operationId": "ShiftController_deleteShift",
+        "summary": "Delete a shift",
+        "description": "Deletes a shift by ID and department",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the shift to delete",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentId",
+            "required": true,
+            "in": "query",
+            "description": "The department ID the shift belongs to",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shift has been successfully deleted."
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      }
+    },
+    "/shifts/{id}/assign": {
+      "post": {
+        "operationId": "ShiftController_assignEmployee",
+        "summary": "Assign an employee to a shift",
+        "description": "Assigns an employee to a specific shift",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the shift",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "departmentId": {
+                    "type": "string",
+                    "description": "Department ID"
+                  },
+                  "employeeId": {
+                    "type": "string",
+                    "description": "Employee ID to assign"
+                  }
+                },
+                "required": [
+                  "departmentId",
+                  "employeeId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employee successfully assigned to shift.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      }
+    },
+    "/shifts/{id}/remove-employee": {
+      "post": {
+        "operationId": "ShiftController_removeEmployee",
+        "summary": "Remove an employee from a shift",
+        "description": "Removes an assigned employee from a shift",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the shift",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "departmentId": {
+                    "type": "string",
+                    "description": "Department ID"
+                  },
+                  "employeeId": {
+                    "type": "string",
+                    "description": "Employee ID to remove"
+                  }
+                },
+                "required": [
+                  "departmentId",
+                  "employeeId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employee successfully removed from shift.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      }
+    },
+    "/shifts/bulk-assign": {
+      "post": {
+        "operationId": "ShiftController_bulkAssignEmployees",
+        "summary": "Bulk assign employees to shifts",
+        "description": "Assigns multiple employees to a shift in a single operation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "shiftId": {
+                    "type": "string",
+                    "description": "Shift ID"
+                  },
+                  "departmentId": {
+                    "type": "string",
+                    "description": "Department ID"
+                  },
+                  "employeeIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of employee IDs to assign"
+                  }
+                },
+                "required": [
+                  "shiftId",
+                  "departmentId",
+                  "employeeIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employees successfully assigned in bulk.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Shifts"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "API Gateway",
+    "description": "The API Gateway API description",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "BreakScheduleDto": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "description": "Start time of the break in ISO format",
+            "example": "2024-03-20T12:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "End time of the break in ISO format",
+            "example": "2024-03-20T13:00:00Z"
+          },
+          "breakType": {
+            "type": "string",
+            "description": "Type of break",
+            "example": "LUNCH"
+          },
+          "isPaid": {
+            "type": "boolean",
+            "description": "Whether this is a paid break",
+            "example": true
+          }
+        }
+      },
+      "CreateShiftDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the shift",
+            "example": "Morning Shift A"
+          },
+          "departmentId": {
+            "type": "string",
+            "description": "The ID of the department this shift belongs to",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "siteId": {
+            "type": "string",
+            "description": "The ID of the site where this shift takes place",
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "The start time of the shift in ISO format",
+            "example": "2024-03-20T09:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "The end time of the shift in ISO format",
+            "example": "2024-03-20T17:00:00Z"
+          },
+          "minEmployeesRequired": {
+            "type": "number",
+            "description": "Minimum number of employees required for this shift",
+            "example": 3,
+            "minimum": 1
+          },
+          "maxEmployeesAllowed": {
+            "type": "number",
+            "description": "Maximum number of employees allowed for this shift",
+            "example": 5,
+            "minimum": 1
+          },
+          "teamLeadId": {
+            "type": "string",
+            "description": "The ID of the team lead assigned to this shift",
+            "example": "123e4567-e89b-12d3-a456-426614174002"
+          },
+          "shiftLeadId": {
+            "type": "string",
+            "description": "The ID of the shift lead assigned to this shift",
+            "example": "123e4567-e89b-12d3-a456-426614174003"
+          },
+          "breaks": {
+            "description": "Array of break schedules for this shift",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreakScheduleDto"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about the shift",
+            "example": "Special training day"
+          },
+          "tags": {
+            "type": "object",
+            "description": "Custom tags for the shift",
+            "example": {
+              "priority": "high",
+              "type": "training"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "departmentId",
+          "siteId",
+          "startTime",
+          "endTime",
+          "minEmployeesRequired",
+          "maxEmployeesAllowed",
+          "breaks"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "departmentId": {
+            "type": "string"
+          },
+          "employeeId": {
+            "type": "string"
+          },
+          "siteId": {
+            "type": "string"
+          },
+          "roleId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "email",
+          "isActive",
+          "departmentId",
+          "employeeId",
+          "siteId",
+          "roleId",
+          "createdAt",
+          "updatedAt",
+          "metadata"
+        ]
+      },
+      "ShiftResponseDto": {
+        "type": "object",
+        "properties": {
+          "shift": {
+            "type": "object"
+          },
+          "employees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "teamLead": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          },
+          "shiftLead": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          }
+        },
+        "required": [
+          "shift",
+          "employees",
+          "teamLead",
+          "shiftLead"
+        ]
+      },
+      "UpdateShiftDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the shift",
+            "example": "Morning Shift A"
+          },
+          "siteId": {
+            "type": "string",
+            "description": "The ID of the site where this shift takes place",
+            "example": "123e4567-e89b-12d3-a456-426614174001"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "The start time of the shift in ISO format",
+            "example": "2024-03-20T09:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "The end time of the shift in ISO format",
+            "example": "2024-03-20T17:00:00Z"
+          },
+          "minEmployeesRequired": {
+            "type": "number",
+            "description": "Minimum number of employees required for this shift",
+            "example": 3,
+            "minimum": 1
+          },
+          "maxEmployeesAllowed": {
+            "type": "number",
+            "description": "Maximum number of employees allowed for this shift",
+            "example": 5,
+            "minimum": 1
+          },
+          "teamLeadId": {
+            "type": "string",
+            "description": "The ID of the team lead assigned to this shift",
+            "example": "123e4567-e89b-12d3-a456-426614174002"
+          },
+          "shiftLeadId": {
+            "type": "string",
+            "description": "The ID of the shift lead assigned to this shift",
+            "example": "123e4567-e89b-12d3-a456-426614174003"
+          },
+          "breaks": {
+            "description": "Array of break schedules for this shift",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreakScheduleDto"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about the shift",
+            "example": "Special training day"
+          },
+          "tags": {
+            "type": "object",
+            "description": "Custom tags for the shift",
+            "example": {
+              "priority": "high",
+              "type": "training"
+            }
+          }
+        }
+      }
+    }
+  }
+}

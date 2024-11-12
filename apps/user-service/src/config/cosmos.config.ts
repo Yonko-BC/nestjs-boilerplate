@@ -8,6 +8,15 @@ export const COSMOS_CONTAINERS_CONFIG: ContainerDefinition[] = [
     indexingPolicy: {
       indexingMode: 'consistent',
       includedPaths: [
+        {
+          path: '/createdAt/?',
+          indexes: [
+            {
+              kind: 'Range',
+              dataType: 'String',
+            },
+          ],
+        },
         { path: '/fullName/?' },
         { path: '/departmentId/?' },
         { path: '/siteId/?' }, // Indexing the siteId for site-specific queries

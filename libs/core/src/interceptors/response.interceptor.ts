@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
+import { v4 as uuidv4 } from 'uuid';
 export interface Response<T> {
   data: T;
   meta?: Record<string, any>;
@@ -21,7 +21,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
     next: CallHandler,
   ): Observable<Response<T>> {
     const request = context.switchToHttp().getRequest();
-    const requestId = request.headers['x-request-id'];
+    const requestId = request.headers['x-request-id'] || uuidv4();
 
     return next.handle().pipe(
       map((data) => ({
@@ -34,10 +34,10 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
   }
 
   private extractMeta(data: any): Record<string, any> | undefined {
-    if (data && typeof data === 'object' && 'meta' in data) {
-      const { meta, ...rest } = data;
-      return meta;
-    }
+    // if (data && typeof data === 'object' && 'meta' in data) {
+    //   const { meta, ...rest } = data;
+    //   return meta;
+    // }
     return undefined;
   }
 }

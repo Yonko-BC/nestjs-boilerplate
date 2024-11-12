@@ -10,6 +10,9 @@ export const grpcClientOptions: ClientsModuleOptions = [
       url: 'localhost:5000',
       package: 'user',
       protoPath: join(process.cwd(), 'proto/user.proto'),
+      // loader: {
+      //   keepCase: true,
+      // },
     },
   },
   {
@@ -19,6 +22,9 @@ export const grpcClientOptions: ClientsModuleOptions = [
       url: 'localhost:5005',
       package: 'shift',
       protoPath: join(process.cwd(), 'proto/shift.proto'),
+      // loader: {
+      //   keepCase: true,
+      // },
     },
   },
 ];
