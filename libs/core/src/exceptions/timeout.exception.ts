@@ -8,11 +8,14 @@ export class TimeoutException extends HttpException {
   ) {
     super(
       {
-        error: 'Operation Timeout',
-        operation,
+        code: HttpStatus.REQUEST_TIMEOUT,
         message: `Operation timed out after ${timeout}ms`,
-        details: process.env.NODE_ENV === 'development' ? details : undefined,
-        statusCode: HttpStatus.REQUEST_TIMEOUT,
+        metadata: {
+          type: 'TIMEOUT_ERROR',
+          operation,
+          timeout,
+          details: process.env.NODE_ENV === 'development' ? details : undefined,
+        },
       },
       HttpStatus.REQUEST_TIMEOUT,
     );

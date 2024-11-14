@@ -1,6 +1,12 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { ClientGrpc, RpcException } from '@nestjs/microservices';
+import {
+  catchError,
+  firstValueFrom,
+  NotFoundError,
+  of,
+  throwError,
+} from 'rxjs';
 import {
   SHIFT_SERVICE_NAME,
   ShiftServiceClient,
@@ -35,7 +41,11 @@ export class ShiftProxy implements OnModuleInit {
   }
 
   async createShift(request: CreateShiftRequest) {
-    return firstValueFrom(this.shiftService.createShift(request));
+    return this.shiftService.createShift(request).pipe(
+      catchError((error) => {
+        return of(error);
+      }),
+    );
   }
 
   async getShift(request: GetShiftRequest) {
@@ -51,7 +61,11 @@ export class ShiftProxy implements OnModuleInit {
   }
 
   async listShifts(request: ListShiftsRequest) {
-    return firstValueFrom(this.shiftService.listShifts(request));
+    return this.shiftService.listShifts(request).pipe(
+      catchError((error) => {
+        return of(error);
+      }),
+    );
   }
 
   async assignEmployeeToShift(request: AssignEmployeeRequest) {

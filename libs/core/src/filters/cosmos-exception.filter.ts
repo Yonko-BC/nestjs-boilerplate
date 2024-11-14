@@ -15,7 +15,7 @@ export class CosmosExceptionFilter implements ExceptionFilter {
     const requestId = request.headers['x-request-id'] || uuidv4();
 
     // Get the error response from the exception
-    const errorResponse = exception.getResponse() as IErrorResponse;
+    const errorResponse = exception.originalError;
 
     // Enhance the error response
     const enhancedErrorResponse: IErrorResponse = {
@@ -49,7 +49,7 @@ export class CosmosExceptionFilter implements ExceptionFilter {
     });
 
     response
-      .status(exception.getStatus())
+      .status(errorResponse.statusCode)
       .set('X-Request-ID', requestId)
       .json(enhancedErrorResponse);
   }

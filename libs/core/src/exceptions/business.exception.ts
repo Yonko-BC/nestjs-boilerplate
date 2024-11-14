@@ -1,21 +1,20 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { RpcException } from '@nestjs/microservices';
 
-export class BusinessException extends HttpException {
+export class BusinessException extends RpcException {
   constructor(
     public readonly code: string,
     public readonly message: string,
     public readonly details?: Record<string, any>,
-    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
   ) {
-    super(
-      {
-        error: 'Business Rule Violation',
+    super({
+      code: 320860,
+      message,
+      metadata: {
+        type: 'BUSINESS_ERROR',
         code,
-        message,
         details: process.env.NODE_ENV === 'development' ? details : undefined,
-        statusCode,
       },
-      statusCode,
-    );
+    });
   }
 }

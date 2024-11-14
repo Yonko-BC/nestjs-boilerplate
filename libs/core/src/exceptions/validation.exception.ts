@@ -1,19 +1,21 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { RpcException } from '@nestjs/microservices';
 import { ValidationError } from 'class-validator';
 
-export class ValidationException extends HttpException {
+export class ValidationException extends RpcException {
   constructor(errors: ValidationError[]) {
     const formattedErrors = ValidationException.formatErrors(errors);
 
-    super(
-      {
-        error: 'Validation Error',
+    console.log('formattedErrors', formattedErrors);
+
+    super({
+      code: 320870,
+      message: 'Request validation failed ..dd...',
+      metadata: {
+        type: 'VALIDATION_ERROR',
         details: formattedErrors,
-        message: 'Request validation failed',
-        statusCode: HttpStatus.BAD_REQUEST,
       },
-      HttpStatus.BAD_REQUEST,
-    );
+    });
   }
 
   private static formatErrors(

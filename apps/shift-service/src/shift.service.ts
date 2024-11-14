@@ -13,13 +13,14 @@ import {
   Shift_ShiftStatus,
   ShiftResponse,
 } from 'libs/proto/shift/generated/proto/shift';
-import { ClientGrpc } from '@nestjs/microservices';
+import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { SERVICE_NAMES } from 'libs/core/src/constants';
 import {
   USER_SERVICE_NAME,
   UserServiceClient,
 } from 'libs/proto/shift/generated/proto/user';
 import { firstValueFrom } from 'rxjs';
+import { ValidationException } from 'libs/core/src/exceptions';
 
 @Injectable()
 export class ShiftService implements OnModuleInit {
@@ -36,13 +37,23 @@ export class ShiftService implements OnModuleInit {
   }
 
   async createShift(dto: CreateShiftDto): Promise<ShiftResponse> {
-    const shift = new Shift({
-      ...dto,
-      partitionKey: dto.departmentId,
-    });
+    // const shift = new Shift({
+    //   ...dto,
+    //   partitionKey: dto.departmentId,
+    // });
 
-    const createdShift = await this.shiftRepository.create(shift);
-    return this.transformToShiftResponse(createdShift);
+    throw new RpcException(
+      new ValidationException([
+        {
+          property: 'ok',
+          constraints: {
+            isNotEmpty: 'Name is required',
+          },
+        },
+      ]),
+    );
+    // const createdShift = await this.shiftRepository.create(shift);
+    // return this.transformToShiftResponse(createdShift);
   }
 
   async getShiftById(id: string, departmentId: string): Promise<ShiftResponse> {

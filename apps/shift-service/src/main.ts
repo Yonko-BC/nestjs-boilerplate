@@ -1,26 +1,33 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-
-import { grpcConfig } from './config/grpc.config';
 import { MicroserviceOptions } from '@nestjs/microservices';
-import { CosmosExceptionFilter } from 'libs/core/src/filters/cosmos-exception.filter';
-import { ValidationExceptionFilter } from 'libs/core/src/filters/validation.filter';
-import { ValidationException } from 'libs/core/src/exceptions/validation.exception';
-import { ResponseInterceptor } from 'libs/core/src/interceptors/response.interceptor';
-import { TimeoutInterceptor } from 'libs/core/src/interceptors/timeout.interceptor';
+import { grpcConfig } from './config/grpc.config';
 import { ShiftModule } from './shift.module';
+import {
+  CustomRpcExceptionFilter,
+  ValidationExceptionFilter,
+  CosmosExceptionFilter,
+} from 'libs/core/src/filters';
+import { ValidationException } from 'libs/core/src/exceptions/validation.exception';
 import { GrpcTransformInterceptor } from 'libs/core/src/interceptors/grpc-transform.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('ShiftService');
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     ShiftModule,
     grpcConfig,
   );
 
+  // Order matters! RpcExceptionFilter should be last as it's the most generic
+  app.useGlobalFilters(
+    new ValidationExceptionFilter(),
+    new CosmosExceptionFilter(),
+    new CustomRpcExceptionFilter(), // This should catch any remaining RPC exceptions
+  );
+
   app.useGlobalInterceptors(new GrpcTransformInterceptor());
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -28,12 +35,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       exceptionFactory: (errors) => new ValidationException(errors),
     }),
-  );
-
-  // Global exception filters
-  app.useGlobalFilters(
-    new ValidationExceptionFilter(),
-    new CosmosExceptionFilter(),
   );
 
   await app.listen();

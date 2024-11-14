@@ -1,35 +1,47 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { RpcException } from '@nestjs/microservices';
 import {
   COSMOS_ERROR_MESSAGES,
   ERROR_CODES,
 } from '../constants/error.constants';
-import { IErrorResponse } from '../interfaces/error-response.interface';
 
-export class CosmosException extends HttpException {
+export class CosmosException extends RpcException {
   constructor(
     public readonly operation: string,
     public readonly originalError: any,
-    public readonly httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
   ) {
     const errorMessage = CosmosException.normalizeErrorMessage(originalError);
-    const errorResponse: IErrorResponse = {
-      error: 'Cosmos DB Error',
+    const metadata = {
+      type: 'COSMOS_ERROR',
       operation,
-      message: errorMessage,
       cosmosErrorCode: originalError.code,
-      httpStatus,
-      timestamp: new Date().toISOString(),
+      requestId: originalError.requestId,
       details:
         process.env.NODE_ENV === 'development'
           ? originalError.message
           : undefined,
-      requestId: originalError.requestId || undefined,
-      statusCode: httpStatus,
-      path: '', // Will be filled by filter
-      method: '', // Will be filled by filter
     };
 
-    super(errorResponse, httpStatus);
+    const rpcError = {
+      code: CosmosException.mapToRpcStatus(originalError.code),
+      message: errorMessage,
+      metadata,
+    };
+
+    super(rpcError);
+  }
+
+  private static mapToRpcStatus(cosmosCode: number): status {
+    switch (cosmosCode) {
+      case ERROR_CODES.COSMOS.NOT_FOUND:
+        return status.NOT_FOUND;
+      case ERROR_CODES.COSMOS.CONFLICT:
+        return status.ALREADY_EXISTS;
+      case ERROR_CODES.COSMOS.RATE_LIMIT:
+        return status.RESOURCE_EXHAUSTED;
+      default:
+        return status.INTERNAL;
+    }
   }
 
   private static normalizeErrorMessage(error: any): string {
