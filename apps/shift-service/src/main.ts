@@ -23,7 +23,7 @@ async function bootstrap() {
   app.useGlobalFilters(
     new ValidationExceptionFilter(),
     new CosmosExceptionFilter(),
-    new CustomRpcExceptionFilter(), // This should catch any remaining RPC exceptions
+    new CustomRpcExceptionFilter(),
   );
 
   app.useGlobalInterceptors(new GrpcTransformInterceptor());

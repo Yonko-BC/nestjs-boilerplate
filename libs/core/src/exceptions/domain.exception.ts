@@ -1,5 +1,6 @@
 import { status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
+import { Metadata } from '@grpc/grpc-js';
 
 export class DomainException extends RpcException {
   constructor(
@@ -7,17 +8,19 @@ export class DomainException extends RpcException {
     public readonly reason: string,
     public readonly value?: any,
   ) {
+    const metadata = new Metadata();
+    metadata.add('type', 'DOMAIN_ERROR');
+    metadata.add('field', field);
+    metadata.add('reason', reason);
+
+    if (process.env.NODE_ENV === 'development' && value !== undefined) {
+      metadata.add('value', JSON.stringify(value));
+    }
+
     super({
       code: status.INVALID_ARGUMENT,
       message: `${field}: ${reason}`,
-      metadata: {
-        type: 'DOMAIN_ERROR',
-        field,
-        reason,
-        value: process.env.NODE_ENV === 'development' ? value : undefined,
-        message: `${field}: ${reason}`,
-        statusCode: status.INVALID_ARGUMENT,
-      },
+      metadata,
     });
   }
 }

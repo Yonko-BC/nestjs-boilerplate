@@ -1,28 +1,26 @@
-import {
-  ArgumentsHost,
-  Catch,
-  RpcExceptionFilter,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
-import { BaseRpcExceptionFilter, RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
+import { Catch, ArgumentsHost, Logger } from '@nestjs/common';
+import { RpcExceptionFilter } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
-import { ValidationException } from '../exceptions';
 
 @Catch(RpcException)
 export class CustomRpcExceptionFilter
   implements RpcExceptionFilter<RpcException>
 {
+  private readonly logger = new Logger(CustomRpcExceptionFilter.name);
+
   catch(exception: RpcException, host: ArgumentsHost): Observable<any> {
     const error = exception.getError() as any;
-    console.log('error in rpc exception filter:', exception);
+
+    this.logger.error({
+      message: 'RPC exception caught',
+      error: error,
+    });
 
     return throwError(() => ({
       code: error.code,
       message: error.message,
       metadata: error.metadata,
-      details: error.details || error.message,
     }));
   }
 }

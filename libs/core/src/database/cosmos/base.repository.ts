@@ -62,7 +62,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
         requestId: cosmosError.requestId,
       };
 
-      throw new CosmosException(operation, errorResponse, statusCode);
+      throw new CosmosException(operation, errorResponse);
     }
   }
 
@@ -145,14 +145,19 @@ export abstract class BaseRepository<T extends BaseEntity> {
 
   async update(id: string, partitionKey: string, item: Partial<T>): Promise<T> {
     return this.executeCosmosOperation('update', async () => {
-      const existing = await this.findById(id, partitionKey);
-      if (!existing) {
-        throw new CosmosException(
-          'update',
-          { message: 'Item not found', code: StatusCodes.NotFound },
-          HttpStatus.NOT_FOUND,
-        );
+      let existing: T | null = null;
+      try {
+        existing = await this.findById(id, partitionKey);
+      } catch (error) {
+        throw new CosmosException('update', error);
       }
+      // if (!existing) {
+      //   throw new CosmosException('update', {
+      //     message: 'Item not found',
+      //     code: StatusCodes.NotFound,
+      //     name: 'CosmosError',
+      //   });
+      // }
 
       const updatedItem = {
         ...existing,
@@ -346,11 +351,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
               (res.resourceBody as any)?.message || 'Bulk operation failed',
             requestId: (res as any)?.requestId,
           };
-          throw new CosmosException(
-            'bulkCreate',
-            errorResponse,
-            res.statusCode as HttpStatus,
-          );
+          throw new CosmosException('bulkCreate', errorResponse);
         }
       });
 
@@ -383,11 +384,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
               (res.resourceBody as any)?.message || 'Bulk operation failed',
             requestId: (res as any)?.requestId,
           };
-          throw new CosmosException(
-            'createMany',
-            errorResponse,
-            res.statusCode as HttpStatus,
-          );
+          throw new CosmosException('createMany', errorResponse);
         }
       });
 

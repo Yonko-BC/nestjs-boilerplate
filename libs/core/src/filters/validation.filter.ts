@@ -1,46 +1,40 @@
-import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common';
-import { Response } from 'express';
+import {
+  Catch,
+  ArgumentsHost,
+  Logger,
+  RpcExceptionFilter,
+} from '@nestjs/common';
 import { ValidationException } from '../exceptions/validation.exception';
 import { DomainException } from '../exceptions/domain.exception';
-import { v4 as uuidv4 } from 'uuid';
 import { BusinessException } from '../exceptions';
 import { throwError } from 'rxjs';
+import { Observable } from 'rxjs';
+import { Metadata } from '@grpc/grpc-js';
 @Catch(ValidationException, DomainException, BusinessException)
-export class ValidationExceptionFilter implements ExceptionFilter {
+export class ValidationExceptionFilter
+  implements
+    RpcExceptionFilter<
+      ValidationException | DomainException | BusinessException
+    >
+{
   private readonly logger = new Logger(ValidationExceptionFilter.name);
 
   catch(
     exception: ValidationException | DomainException | BusinessException,
     host: ArgumentsHost,
-  ) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
-    const requestId = request.headers['x-request-id'] || uuidv4();
+  ): Observable<any> {
+    const error = exception.getError() as any;
 
-    const errorResponse = {
-      // statusCode: exception.getStatus(),
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-      requestId,
-      ...(exception.getError() as Record<string, any>),
-    };
+    // Use the metadata from the exception directly if it exists
+    const metadata =
+      error.metadata instanceof Metadata ? error.metadata : new Metadata();
 
-    // console.log('errorResponse:', errorResponse);
-
-    // Structured logging
     this.logger.error({
-      message: 'Validation error',
-      requestId,
-      path: request.url,
-      method: request.method,
-      errors: errorResponse,
+      message: 'Request validation failed',
+      error: error,
+      metadata: metadata,
     });
 
-    return throwError(() => ({
-      error: exception.getError(),
-      metadata: errorResponse,
-    }));
+    return throwError(() => error);
   }
 }

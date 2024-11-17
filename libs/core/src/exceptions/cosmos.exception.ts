@@ -1,26 +1,22 @@
 import { status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
-import {
-  COSMOS_ERROR_MESSAGES,
-  ERROR_CODES,
-} from '../constants/error.constants';
+import { StatusCodes, ErrorResponse } from '@azure/cosmos';
+import { Metadata } from '@grpc/grpc-js';
 
 export class CosmosException extends RpcException {
   constructor(
     public readonly operation: string,
-    public readonly originalError: any,
+    public readonly originalError: ErrorResponse,
   ) {
     const errorMessage = CosmosException.normalizeErrorMessage(originalError);
-    const metadata = {
-      type: 'COSMOS_ERROR',
-      operation,
-      cosmosErrorCode: originalError.code,
-      requestId: originalError.requestId,
-      details:
-        process.env.NODE_ENV === 'development'
-          ? originalError.message
-          : undefined,
-    };
+    const metadata = new Metadata();
+    metadata.add('type', 'COSMOS_ERROR');
+    metadata.add('operation', operation);
+    metadata.add('cosmosErrorCode', originalError.code?.toString() || '');
+
+    if (originalError.requestId) {
+      metadata.add('requestId', originalError.requestId);
+    }
 
     const rpcError = {
       code: CosmosException.mapToRpcStatus(originalError.code),
@@ -31,33 +27,30 @@ export class CosmosException extends RpcException {
     super(rpcError);
   }
 
-  private static mapToRpcStatus(cosmosCode: number): status {
+  private static mapToRpcStatus(cosmosCode: ErrorResponse['code']): status {
     switch (cosmosCode) {
-      case ERROR_CODES.COSMOS.NOT_FOUND:
-        return status.NOT_FOUND;
-      case ERROR_CODES.COSMOS.CONFLICT:
+      case StatusCodes.Conflict:
         return status.ALREADY_EXISTS;
-      case ERROR_CODES.COSMOS.RATE_LIMIT:
+      case StatusCodes.NotFound:
+        return status.NOT_FOUND;
+      case StatusCodes.BadRequest:
+        return status.INVALID_ARGUMENT;
+      case StatusCodes.TooManyRequests:
         return status.RESOURCE_EXHAUSTED;
+      case StatusCodes.Forbidden:
+        return status.PERMISSION_DENIED;
+      case StatusCodes.Unauthorized:
+        return status.UNAUTHENTICATED;
+      case StatusCodes.PreconditionFailed:
+        return status.FAILED_PRECONDITION;
+      case StatusCodes.RequestTimeout:
+        return status.DEADLINE_EXCEEDED;
       default:
         return status.INTERNAL;
     }
   }
 
-  private static normalizeErrorMessage(error: any): string {
-    const message = error.message || 'Unknown database error';
-
-    // Map known error codes to friendly messages
-    if (error.code === ERROR_CODES.COSMOS.CONFLICT) {
-      return COSMOS_ERROR_MESSAGES.DUPLICATE_ENTITY;
-    }
-    if (error.code === ERROR_CODES.COSMOS.NOT_FOUND) {
-      return COSMOS_ERROR_MESSAGES.NOT_FOUND;
-    }
-    if (error.code === ERROR_CODES.COSMOS.RATE_LIMIT) {
-      return COSMOS_ERROR_MESSAGES.RATE_LIMIT_EXCEEDED;
-    }
-
-    return message.split(',')[0].trim();
+  private static normalizeErrorMessage(error: ErrorResponse): string {
+    return error.body?.message ?? error.message;
   }
 }

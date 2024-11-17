@@ -3,41 +3,41 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-export interface Response<T> {
-  data: T;
-  meta?: Record<string, any>;
-  timestamp: string;
-  requestId: string;
-}
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<Response<T>> {
-    const request = context.switchToHttp().getRequest();
-    const requestId = request.headers['x-request-id'] || uuidv4();
+export class ResponseInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(ResponseInterceptor.name);
 
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((data) => ({
-        data,
-        meta: this.extractMeta(data),
-        timestamp: new Date().toISOString(),
-        requestId,
-      })),
-    );
-  }
+      map((data) => {
+        // If it's an error response from gRPC
+        if (
+          data &&
+          typeof data === 'object' &&
+          'code' in data &&
+          data.code !== 0
+        ) {
+          this.logger.debug('Throwing gRPC error response:', data);
+          throw data;
+        }
 
-  private extractMeta(data: any): Record<string, any> | undefined {
-    // if (data && typeof data === 'object' && 'meta' in data) {
-    //   const { meta, ...rest } = data;
-    //   return meta;
-    // }
-    return undefined;
+        // Normal successful response
+        return {
+          data,
+          timestamp: new Date().toISOString(),
+          requestId: uuidv4(),
+        };
+      }),
+      catchError((error) => {
+        this.logger.debug('Error caught in interceptor:', error);
+        return throwError(() => error);
+      }),
+    );
   }
 }

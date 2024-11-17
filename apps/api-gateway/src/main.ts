@@ -11,6 +11,8 @@ import {
 import { ValidationException } from 'libs/core/src/exceptions/validation.exception';
 import { ResponseInterceptor } from 'libs/core/src/interceptors/response.interceptor';
 import { TimeoutInterceptor } from 'libs/core/src/interceptors/timeout.interceptor';
+import { ApiRpcExceptionFilter } from 'libs/core/src/filters/api-rpc-exception.filter';
+import { HttpExceptionFilter } from 'libs/core/src/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
@@ -20,9 +22,12 @@ async function bootstrap() {
 
   // Global interceptors
   app.useGlobalInterceptors(
-    new ResponseInterceptor(),
     new TimeoutInterceptor(10000),
+    new ResponseInterceptor(),
   );
+
+  // Only use ApiRpcExceptionFilter as it will handle all exceptions
+  app.useGlobalFilters(new ApiRpcExceptionFilter());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -32,14 +37,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       exceptionFactory: (errors) => new ValidationException(errors),
     }),
-  );
-
-  // Order matters! More specific filters should come first
-  app.useGlobalFilters(
-    new ValidationExceptionFilter(),
-    new CosmosExceptionFilter(),
-    new CustomRpcExceptionFilter(), // This will handle RPC exceptions from microservices
-    new CatchEverythingFilter(httpAdapterHost), // This should be last as fallback
   );
 
   await app.listen(process.env.PORT ?? 3000);

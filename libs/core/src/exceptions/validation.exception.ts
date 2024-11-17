@@ -1,29 +1,32 @@
 import { status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
 import { ValidationError } from 'class-validator';
-
+import { Metadata } from '@grpc/grpc-js';
 export class ValidationException extends RpcException {
   constructor(errors: ValidationError[]) {
     const formattedErrors = ValidationException.formatErrors(errors);
 
-    console.log('formattedErrors', formattedErrors);
+    const metadata = new Metadata();
+    metadata.add('type', 'VALIDATION_ERROR');
+    metadata.add('details', JSON.stringify(formattedErrors));
+    metadata.add('timestamp', new Date().toISOString());
 
     super({
-      code: 320870,
-      message: 'Request validation failed ..dd...',
-      metadata: {
-        type: 'VALIDATION_ERROR',
-        details: formattedErrors,
-      },
+      code: status.INVALID_ARGUMENT,
+      message: 'Validation failed',
+      metadata: metadata,
     });
   }
 
   private static formatErrors(
     errors: ValidationError[],
   ): Record<string, string[]> {
-    return errors.reduce((acc, error) => {
-      acc[error.property] = Object.values(error.constraints || {});
-      return acc;
-    }, {});
+    return errors.reduce(
+      (acc, error) => {
+        acc[error.property] = Object.values(error.constraints || {});
+        return acc;
+      },
+      {} as Record<string, string[]>,
+    );
   }
 }

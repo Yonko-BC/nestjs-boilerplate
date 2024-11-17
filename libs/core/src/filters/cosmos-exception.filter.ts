@@ -1,56 +1,52 @@
-import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common';
-import { Response } from 'express';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  Logger,
+  RpcExceptionFilter,
+} from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { Observable, throwError } from 'rxjs';
 import { CosmosException } from '../exceptions/cosmos.exception';
-import { IErrorResponse } from '../interfaces/error-response.interface';
-import { v4 as uuidv4 } from 'uuid';
+import { status } from '@grpc/grpc-js';
+import { Metadata } from '@grpc/grpc-js';
 
 @Catch(CosmosException)
-export class CosmosExceptionFilter implements ExceptionFilter {
+export class CosmosExceptionFilter
+  implements RpcExceptionFilter<CosmosException>
+{
   private readonly logger = new Logger(CosmosExceptionFilter.name);
 
-  catch(exception: CosmosException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
-    const requestId = request.headers['x-request-id'] || uuidv4();
-
-    // Get the error response from the exception
+  catch(exception: CosmosException, host: ArgumentsHost): Observable<any> {
     const errorResponse = exception.originalError;
 
-    // Enhance the error response
-    const enhancedErrorResponse: IErrorResponse = {
-      ...errorResponse,
-      path: request.url,
-      method: request.method,
-      requestId,
-      timestamp: new Date().toISOString(),
-    };
+    // Create gRPC metadata
+    const metadata = new Metadata();
+    metadata.add('type', 'COSMOS_ERROR');
+    metadata.add('operation', exception.operation);
+    metadata.add('cosmosErrorCode', errorResponse.code?.toString() || '');
+    metadata.add('timestamp', new Date().toISOString());
 
-    // Remove undefined/null properties
-    Object.keys(enhancedErrorResponse).forEach(
-      (key) =>
-        (enhancedErrorResponse[key] === undefined ||
-          enhancedErrorResponse[key] === null) &&
-        delete enhancedErrorResponse[key],
-    );
+    if (errorResponse.requestId) {
+      metadata.add('requestId', errorResponse.requestId);
+    }
 
-    // Structured logging
+    // Log the error
     this.logger.error({
       message: `Cosmos DB error during ${exception.operation}`,
-      requestId,
-      path: request.url,
-      method: request.method,
-      errorCode: errorResponse.cosmosErrorCode,
+      errorCode: errorResponse.code,
       errorMessage: errorResponse.message,
-      details:
-        process.env.NODE_ENV === 'development'
-          ? exception.originalError
-          : undefined,
+      details: errorResponse,
     });
 
-    response
-      .status(errorResponse.statusCode)
-      .set('X-Request-ID', requestId)
-      .json(enhancedErrorResponse);
+    // Create gRPC error object
+    const error = {
+      code: status.INTERNAL, // You can map Cosmos status codes to gRPC status codes
+      message: errorResponse.message,
+      metadata,
+    };
+
+    // Return RPC error response
+    return throwError(() => error);
   }
 }

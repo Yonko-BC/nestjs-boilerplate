@@ -1,5 +1,5 @@
-import { Controller, HttpStatus, NotFoundException } from '@nestjs/common';
-import { GrpcMethod, RpcException } from '@nestjs/microservices';
+import { Controller, HttpStatus } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { plainToClass } from 'class-transformer';
 import { Empty } from 'libs/proto/user/generated/google/protobuf/empty';
 import {
@@ -30,7 +30,14 @@ import { CreateShiftDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
 import { ShiftService } from './shift.service';
 import { GrpcToSnakeCase } from 'libs/core/src/decorators/grpc-transform.decorator';
-import { BusinessException } from 'libs/core/src/exceptions';
+import {
+  BusinessException,
+  CosmosException,
+  DomainException,
+  ValidationException,
+} from 'libs/core/src/exceptions';
+import { StatusCodes } from '@azure/cosmos';
+import { status } from '@grpc/grpc-js';
 
 @Controller()
 @ShiftServiceControllerMethods()
@@ -40,7 +47,21 @@ export class ShiftController implements ShiftServiceController {
   @GrpcMethod(SHIFT_SERVICE_NAME)
   @GrpcToSnakeCase()
   async listShifts(request: ListShiftsRequest): Promise<ListShiftsResponse> {
-    throw new RpcException(new NotFoundException('Product was not found!'));
+    console.log('listShifts');
+    // throw new ValidationException([
+    //   {
+    //     property: 'test',
+    //     constraints: {
+    //       isString: 'test',
+    //     },
+    //   },
+    // ]);
+    throw new CosmosException('listShifts', {
+      code: StatusCodes.Forbidden,
+      message: 'test',
+      name: 'test',
+    });
+
     // throw new BusinessException('test', 'test', {
     //   statusCode: HttpStatus.BAD_REQUEST,
     //   message: 'test',
